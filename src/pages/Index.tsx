@@ -16,7 +16,7 @@ const sampleTasks: Task[] = [
     status: 'todo',
     priority: 'high',
     assignee: 'Alice',
-    dueDate: new Date().toISOString().split('T')[0],
+    tags: ['Shopping', 'Urgent'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

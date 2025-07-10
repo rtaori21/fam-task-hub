@@ -7,8 +7,10 @@ export interface Task {
   description?: string
   status: TaskStatus
   priority: TaskPriority
+  tags?: string[]
   assignee?: string
   dueDate?: string
+  attachments?: { name: string; url: string; type: string }[]
   createdAt: string
   updatedAt: string
 }

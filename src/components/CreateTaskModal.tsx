@@ -35,6 +35,8 @@ export function CreateTaskModal({
 }: CreateTaskModalProps) {
   const [title, setTitle] = useState(editingTask?.title || '')
   const [description, setDescription] = useState(editingTask?.description || '')
+  const [tags, setTags] = useState<string[]>(editingTask?.tags || [])
+  const [newTag, setNewTag] = useState('')
   const [priority, setPriority] = useState<TaskPriority>(editingTask?.priority || 'medium')
   const [assignee, setAssignee] = useState(editingTask?.assignee || 'unassigned')
   const [dueDate, setDueDate] = useState(editingTask?.dueDate || '')
@@ -48,6 +50,7 @@ export function CreateTaskModal({
       description: description.trim() || undefined,
       priority,
       assignee: assignee !== 'unassigned' ? assignee : undefined,
+      tags: tags.length > 0 ? tags : undefined,
       dueDate: dueDate || undefined,
       status,
     })
