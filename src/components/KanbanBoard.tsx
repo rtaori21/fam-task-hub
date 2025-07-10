@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from './TaskCard'
-import { Task, TaskStatus } from '@/types'
+import { TaskFilters } from './TaskFilters'
+import { Task, TaskStatus, TaskPriority } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface KanbanBoardProps {
@@ -32,6 +33,22 @@ const statusConfig = {
 
 export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask }: KanbanBoardProps) {
   const [draggedOver, setDraggedOver] = useState<TaskStatus | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedPriority, setSelectedPriority] = useState<TaskPriority | 'all'>('all')
+
+  // Filter tasks based on search and filters
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+    
+    const matchesTags = selectedTags.length === 0 || 
+                       (task.tags && selectedTags.some(tag => task.tags!.includes(tag)))
+    
+    const matchesPriority = selectedPriority === 'all' || task.priority === selectedPriority
+
+    return matchesSearch && matchesTags && matchesPriority
+  })
 
   const handleDrop = (e: React.DragEvent, status: TaskStatus) => {
     e.preventDefault()
@@ -55,10 +72,27 @@ export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask }: KanbanBoardPr
   }
 
   const getTasksByStatus = (status: TaskStatus) => 
-    tasks.filter(task => task.status === status)
+    filteredTasks.filter(task => task.status === status)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+    <div className="space-y-6">
+      <TaskFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        selectedTags={selectedTags}
+        onTagToggle={(tag) => {
+          setSelectedTags(prev => 
+            prev.includes(tag) 
+              ? prev.filter(t => t !== tag)
+              : [...prev, tag]
+          )
+        }}
+        selectedPriority={selectedPriority}
+        onPriorityChange={setSelectedPriority}
+        tasks={tasks}
+      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
       {(Object.keys(statusConfig) as TaskStatus[]).map(status => {
         const config = statusConfig[status]
         const statusTasks = getTasksByStatus(status)
@@ -127,6 +161,7 @@ export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask }: KanbanBoardPr
           </Card>
         )
       })}
+      </div>
     </div>
   )
 }

@@ -62,6 +62,17 @@ export function TaskCard({ task, onStatusChange, onEdit }: TaskCardProps) {
           )}
         </div>
 
+        {/* Tags */}
+        {task.tags && task.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {task.tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="text-xs px-2 py-0">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />

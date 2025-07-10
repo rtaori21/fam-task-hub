@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, User, Flag } from 'lucide-react'
+import { Calendar, User, Flag, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Task, TaskStatus, TaskPriority } from '@/types'
 
@@ -140,8 +141,47 @@ export function CreateTaskModal({
                   <SelectItem value="done">Done</SelectItem>
                 </SelectContent>
               </Select>
+          </div>
+
+          {/* Tags Section */}
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map(tag => (
+                <Badge key={tag} variant="secondary" className="cursor-pointer">
+                  {tag}
+                  <X className="h-3 w-3 ml-1" onClick={() => setTags(tags.filter(t => t !== tag))} />
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add tag..."
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && newTag.trim() && !tags.includes(newTag.trim())) {
+                    setTags([...tags, newTag.trim()])
+                    setNewTag('')
+                  }
+                }}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  if (newTag.trim() && !tags.includes(newTag.trim())) {
+                    setTags([...tags, newTag.trim()])
+                    setNewTag('')
+                  }
+                }}
+                disabled={!newTag.trim() || tags.includes(newTag.trim())}
+              >
+                Add
+              </Button>
             </div>
           </div>
+        </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
