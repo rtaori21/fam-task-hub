@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { Dashboard } from '@/components/Dashboard'
 import { KanbanBoard } from '@/components/KanbanBoard'
+import { CalendarView } from '@/components/CalendarView'
+import { NotificationCenter } from '@/components/NotificationCenter'
 import { CreateTaskModal } from '@/components/CreateTaskModal'
 import { Task, TaskStatus } from '@/types'
+import { CalendarEvent, TimeBlock, NotificationSettings } from '@/types/calendar'
 import { useToast } from '@/hooks/use-toast'
 import heroImage from '@/assets/hero-image.jpg'
 
@@ -45,8 +48,17 @@ const sampleTasks: Task[] = [
 const Index = () => {
   const [currentView, setCurrentView] = useState('dashboard')
   const [tasks, setTasks] = useState<Task[]>(sampleTasks)
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [createTaskStatus, setCreateTaskStatus] = useState<TaskStatus>('todo')
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    dailySummary: true,
+    taskAssigned: true, 
+    taskDueSoon: true,
+    taskOverdue: true,
+    summaryTime: '09:00'
+  })
   const { toast } = useToast()
 
   const handleCreateTask = (status: TaskStatus = 'todo') => {
@@ -95,10 +107,38 @@ const Index = () => {
         )
       case 'calendar':
         return (
-          <div className="text-center py-12">
-            <img src={heroImage} alt="Calendar view" className="mx-auto max-w-md rounded-lg shadow-soft mb-6" />
-            <h2 className="text-2xl font-bold text-foreground mb-4">Calendar View</h2>
-            <p className="text-muted-foreground">Coming soon in Phase 3!</p>
+          <CalendarView
+            tasks={tasks}
+            events={events}
+            timeBlocks={timeBlocks}
+            onEventSelect={(event) => {
+              toast({
+                title: "Event Selected",
+                description: `Selected: ${event.title}`,
+              })
+            }}
+            onCreateEvent={(start, end) => {
+              toast({
+                title: "Create Event",
+                description: "Event creation coming soon!",
+              })
+            }}
+            onCreateTimeBlock={() => {
+              toast({
+                title: "Block Time",
+                description: "Time blocking coming soon!",
+              })
+            }}
+          />
+        )
+      case 'notifications':
+        return (
+          <div className="max-w-2xl mx-auto">
+            <NotificationCenter
+              tasks={tasks}
+              settings={notificationSettings}
+              onSettingsChange={setNotificationSettings}
+            />
           </div>
         )
       case 'members':

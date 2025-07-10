@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Home, Kanban, Calendar, Settings, Users, Plus } from 'lucide-react'
+import { Home, Kanban, Calendar, Settings, Users, Plus, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -15,6 +15,7 @@ const navigation = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'kanban', label: 'Tasks', icon: Kanban },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'members', label: 'Family', icon: Users },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
