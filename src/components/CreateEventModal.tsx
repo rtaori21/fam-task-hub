@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, Users, X } from 'lucide-react'
+import { Calendar, Clock, Users, X, Check } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CalendarEvent, TimeBlock } from '@/types/calendar'
 
@@ -23,7 +25,7 @@ interface CreateEventModalProps {
   initialEnd?: Date
 }
 
-const familyMembers = ['Alice', 'Bob', 'Charlie', 'Diana'] // In real app, from workspace
+const familyMembers = ['Alice', 'Bob', 'Charlie', 'Diana', 'Me'] // Added 'Me' option
 
 export function CreateEventModal({ 
   isOpen, 
@@ -36,7 +38,7 @@ export function CreateEventModal({
   const [eventType, setEventType] = useState<'event' | 'blocked'>('event')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [assignee, setAssignee] = useState('')
+  const [assignees, setAssignees] = useState<string[]>([])
   const [startDate, setStartDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -67,7 +69,7 @@ export function CreateEventModal({
         start,
         end,
         type: 'event',
-        assignee: assignee || undefined,
+        assignees: assignees.length > 0 ? assignees : undefined,
         color: '#059669' // Green for events
       })
     } else {
@@ -90,7 +92,7 @@ export function CreateEventModal({
     // Reset form
     setTitle('')
     setDescription('')
-    setAssignee('')
+    setAssignees([])
     setStartDate('')
     setStartTime('')
     setEndDate('')
@@ -99,6 +101,22 @@ export function CreateEventModal({
     setBlockType('family')
     
     onClose()
+  }
+  
+  const toggleAssignee = (member: string) => {
+    setAssignees(prev => 
+      prev.includes(member) 
+        ? prev.filter(a => a !== member)
+        : [...prev, member]
+    )
+  }
+
+  const selectAllMembers = () => {
+    setAssignees(familyMembers)
+  }
+
+  const clearAllAssignees = () => {
+    setAssignees([])
   }
 
   return (
@@ -201,26 +219,73 @@ export function CreateEventModal({
             </div>
           </div>
 
-          {/* Event-specific fields */}
+          {/* Multi-assignee for events */}
           {eventType === 'event' && (
-            <div className="space-y-2">
-              <Label>Assign to Family Member</Label>
-              <Select value={assignee} onValueChange={setAssignee}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose member (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="everyone">Everyone</SelectItem>
-                  {familyMembers.map(member => (
-                    <SelectItem key={member} value={member}>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        {member}
-                      </div>
-                    </SelectItem>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Assign to Family Members</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllMembers}
+                    className="text-xs"
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearAllAssignees}
+                    className="text-xs"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+
+              {/* Selected assignees display */}
+              {assignees.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {assignees.map(member => (
+                    <Badge key={member} variant="secondary" className="cursor-pointer">
+                      {member}
+                      <X 
+                        className="h-3 w-3 ml-1" 
+                        onClick={() => toggleAssignee(member)} 
+                      />
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+
+              {/* Member checkboxes */}
+              <div className="grid grid-cols-2 gap-3">
+                {familyMembers.map(member => (
+                  <div key={member} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={member}
+                      checked={assignees.includes(member)}
+                      onCheckedChange={() => toggleAssignee(member)}
+                    />
+                    <Label 
+                      htmlFor={member}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Users className="h-4 w-4" />
+                      {member}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+
+              {assignees.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No one assigned - this will be a general family event
+                </p>
+              )}
             </div>
           )}
 

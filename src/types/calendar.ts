@@ -4,7 +4,7 @@ export interface CalendarEvent {
   start: Date
   end: Date
   type: 'task' | 'event' | 'blocked'
-  assignee?: string
+  assignees?: string[]
   priority?: 'low' | 'medium' | 'high'
   color?: string
   description?: string
