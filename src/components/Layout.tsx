@@ -1,0 +1,106 @@
+import { useState } from 'react'
+import { Home, Kanban, Calendar, Settings, Users, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+
+interface LayoutProps {
+  children: React.ReactNode
+  currentView: string
+  onViewChange: (view: string) => void
+  onCreateTask: () => void
+}
+
+const navigation = [
+  { id: 'dashboard', label: 'Dashboard', icon: Home },
+  { id: 'kanban', label: 'Tasks', icon: Kanban },
+  { id: 'calendar', label: 'Calendar', icon: Calendar },
+  { id: 'members', label: 'Family', icon: Users },
+  { id: 'settings', label: 'Settings', icon: Settings },
+]
+
+export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
+  return (
+    <div className="min-h-screen bg-gradient-subtle">
+      {/* Header */}
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <Home className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-foreground">Family Home</h1>
+                <p className="text-xs text-muted-foreground">The Johnson Family</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button onClick={onCreateTask} size="sm" variant="gradient">
+                <Plus className="h-4 w-4 mr-1" />
+                New Task
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Navigation */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <Card className="p-4">
+              <nav className="space-y-2">
+                {navigation.map((item) => {
+                  const Icon = item.icon
+                  const isActive = currentView === item.id
+                  
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onViewChange(item.id)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-smooth',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-soft'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  )
+                })}
+              </nav>
+
+              {/* Quick Stats */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="text-sm font-medium text-foreground mb-3">Quick Stats</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Active Tasks</span>
+                    <span className="font-medium text-foreground">12</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Completed</span>
+                    <span className="font-medium text-status-done">8</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Family Members</span>
+                    <span className="font-medium text-foreground">4</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+            {children}
+          </main>
+        </div>
+      </div>
+    </div>
+  )
+}
