@@ -36,7 +36,7 @@ export function CreateTaskModal({
   const [title, setTitle] = useState(editingTask?.title || '')
   const [description, setDescription] = useState(editingTask?.description || '')
   const [priority, setPriority] = useState<TaskPriority>(editingTask?.priority || 'medium')
-  const [assignee, setAssignee] = useState(editingTask?.assignee || '')
+  const [assignee, setAssignee] = useState(editingTask?.assignee || 'unassigned')
   const [dueDate, setDueDate] = useState(editingTask?.dueDate || '')
   const [status, setStatus] = useState<TaskStatus>(editingTask?.status || initialStatus)
 
@@ -47,7 +47,7 @@ export function CreateTaskModal({
       title: title.trim(),
       description: description.trim() || undefined,
       priority,
-      assignee: assignee || undefined,
+      assignee: assignee !== 'unassigned' ? assignee : undefined,
       dueDate: dueDate || undefined,
       status,
     })
@@ -56,7 +56,7 @@ export function CreateTaskModal({
     setTitle('')
     setDescription('')
     setPriority('medium')
-    setAssignee('')
+    setAssignee('unassigned')
     setDueDate('')
     setStatus(initialStatus)
     
@@ -148,7 +148,7 @@ export function CreateTaskModal({
                   <SelectValue placeholder="Choose member" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {familyMembers.map(member => (
                     <SelectItem key={member} value={member}>
                       <div className="flex items-center gap-2">
