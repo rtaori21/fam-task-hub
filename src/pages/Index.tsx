@@ -5,6 +5,7 @@ import { KanbanBoard } from '@/components/KanbanBoard'
 import { CalendarView } from '@/components/CalendarView'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { CreateTaskModal } from '@/components/CreateTaskModal'
+import { CreateEventModal } from '@/components/CreateEventModal'
 import { Task, TaskStatus } from '@/types'
 import { CalendarEvent, TimeBlock, NotificationSettings } from '@/types/calendar'
 import { useToast } from '@/hooks/use-toast'
@@ -51,6 +52,8 @@ const Index = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false)
+  const [eventModalInitialTime, setEventModalInitialTime] = useState<{ start?: Date; end?: Date }>({})
   const [createTaskStatus, setCreateTaskStatus] = useState<TaskStatus>('todo')
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     dailySummary: true,
@@ -118,16 +121,11 @@ const Index = () => {
               })
             }}
             onCreateEvent={(start, end) => {
-              toast({
-                title: "Create Event",
-                description: "Event creation coming soon!",
-              })
+              setEventModalInitialTime({ start, end })
+              setIsCreateEventModalOpen(true)
             }}
             onCreateTimeBlock={() => {
-              toast({
-                title: "Block Time",
-                description: "Time blocking coming soon!",
-              })
+              setIsCreateEventModalOpen(true)
             }}
           />
         )
@@ -160,6 +158,30 @@ const Index = () => {
     }
   }
 
+  const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
+    const newEvent: CalendarEvent = {
+      ...eventData,
+      id: Date.now().toString(),
+    }
+    setEvents(prev => [...prev, newEvent])
+    toast({
+      title: "Event Created",
+      description: `"${newEvent.title}" has been added to your calendar.`,
+    })
+  }
+
+  const handleSaveTimeBlock = (timeBlockData: Omit<TimeBlock, 'id'>) => {
+    const newTimeBlock: TimeBlock = {
+      ...timeBlockData,
+      id: Date.now().toString(),
+    }
+    setTimeBlocks(prev => [...prev, newTimeBlock])
+    toast({
+      title: "Time Blocked",
+      description: `"${newTimeBlock.title}" has been blocked on your calendar.`,
+    })
+  }
+
   return (
     <>
       <Layout
@@ -175,6 +197,18 @@ const Index = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleSaveTask}
         initialStatus={createTaskStatus}
+      />
+
+      <CreateEventModal
+        isOpen={isCreateEventModalOpen}
+        onClose={() => {
+          setIsCreateEventModalOpen(false)
+          setEventModalInitialTime({})
+        }}
+        onSaveEvent={handleSaveEvent}
+        onSaveTimeBlock={handleSaveTimeBlock}
+        initialStart={eventModalInitialTime.start}
+        initialEnd={eventModalInitialTime.end}
       />
     </>
   )
