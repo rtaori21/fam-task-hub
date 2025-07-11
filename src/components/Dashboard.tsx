@@ -10,7 +10,7 @@ interface DashboardProps {
   onCreateTask: () => void
 }
 
-export function Dashboard({ tasks, onCreateTask }: DashboardProps) {
+export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
   const todayTasks = tasks.filter(task => {
     if (!task.dueDate) return false
     const today = new Date().toDateString()
