@@ -50,10 +50,10 @@ export function Settings({}: SettingsProps) {
 
   // Update preferences.theme when theme changes
   useEffect(() => {
-    if (theme) {
+    if (theme && theme !== preferences.theme) {
       setPreferences(prev => ({ ...prev, theme: theme as 'light' | 'dark' | 'system' }))
     }
-  }, [theme])
+  }, [theme, preferences.theme])
 
   const handleSave = () => {
     // In a real app, this would save to backend/localStorage
