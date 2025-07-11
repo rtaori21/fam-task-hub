@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { Dashboard } from '@/components/Dashboard'
+import { KanbanBoard } from '@/components/KanbanBoard'
+import { FamilyMembers } from '@/components/FamilyMembers'
 import { CreateTaskModal } from '@/components/CreateTaskModal'
-import { Task } from '@/types'
+import { Task, TaskStatus } from '@/types'
 
 const Index = () => {
   const [currentView, setCurrentView] = useState('dashboard')
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
@@ -43,18 +46,53 @@ const Index = () => {
     },
   ])
 
-  const handleCreateTask = () => {
+  const handleCreateTask = (status?: TaskStatus) => {
+    setEditingTask(null)
+    setIsCreateTaskOpen(true)
+  }
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task)
     setIsCreateTaskOpen(true)
   }
 
   const handleSaveTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newTask: Task = {
-      ...taskData,
-      id: Math.random().toString(36).substr(2, 9),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    if (editingTask) {
+      // Update existing task
+      setTasks(prev => prev.map(task => 
+        task.id === editingTask.id 
+          ? { ...taskData, id: editingTask.id, createdAt: editingTask.createdAt, updatedAt: new Date().toISOString() }
+          : task
+      ))
+    } else {
+      // Create new task
+      const newTask: Task = {
+        ...taskData,
+        id: Math.random().toString(36).substr(2, 9),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      setTasks(prev => [...prev, newTask])
     }
-    setTasks(prev => [...prev, newTask])
+    setEditingTask(null)
+  }
+
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks(prev => prev.map(task => 
+      task.id === updatedTask.id ? updatedTask : task
+    ))
+  }
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(prev => prev.filter(task => task.id !== taskId))
+  }
+
+  const handleUpdateTaskStatus = (taskId: string, newStatus: TaskStatus) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId 
+        ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
+        : task
+    ))
   }
 
   const renderView = () => {
@@ -62,13 +100,21 @@ const Index = () => {
       case 'dashboard':
         return <Dashboard tasks={tasks} onCreateTask={handleCreateTask} />
       case 'kanban':
-        return <div className="text-center py-12 text-muted-foreground">Kanban Board - Coming Soon</div>
+        return (
+          <KanbanBoard 
+            tasks={tasks} 
+            onCreateTask={handleCreateTask}
+            onEditTask={handleEditTask}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+            onDeleteTask={handleDeleteTask}
+          />
+        )
       case 'calendar':
         return <div className="text-center py-12 text-muted-foreground">Calendar View - Coming Soon</div>
       case 'notifications':
         return <div className="text-center py-12 text-muted-foreground">Notifications - Coming Soon</div>
       case 'members':
-        return <div className="text-center py-12 text-muted-foreground">Family Members - Coming Soon</div>
+        return <FamilyMembers />
       case 'settings':
         return <div className="text-center py-12 text-muted-foreground">Settings - Coming Soon</div>
       default:
@@ -88,8 +134,12 @@ const Index = () => {
 
       <CreateTaskModal 
         isOpen={isCreateTaskOpen}
-        onClose={() => setIsCreateTaskOpen(false)}
+        onClose={() => {
+          setIsCreateTaskOpen(false)
+          setEditingTask(null)
+        }}
         onSave={handleSaveTask}
+        editingTask={editingTask || undefined}
       />
     </>
   )

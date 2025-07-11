@@ -9,8 +9,11 @@ import { cn } from '@/lib/utils'
 
 interface KanbanBoardProps {
   tasks: Task[]
-  onTaskUpdate: (task: Task) => void
-  onCreateTask: (status: TaskStatus) => void
+  onTaskUpdate?: (task: Task) => void
+  onCreateTask: (status?: TaskStatus) => void
+  onEditTask?: (task: Task) => void
+  onUpdateTaskStatus?: (taskId: string, newStatus: TaskStatus) => void
+  onDeleteTask?: (taskId: string) => void
 }
 
 const statusConfig = {
@@ -31,7 +34,7 @@ const statusConfig = {
   }
 }
 
-export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask, onEditTask, onUpdateTaskStatus, onDeleteTask }: KanbanBoardProps) {
   const [draggedOver, setDraggedOver] = useState<TaskStatus | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -56,7 +59,11 @@ export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask }: KanbanBoardPr
     const task = tasks.find(t => t.id === taskId)
     
     if (task && task.status !== status) {
-      onTaskUpdate({ ...task, status, updatedAt: new Date().toISOString() })
+      if (onUpdateTaskStatus) {
+        onUpdateTaskStatus(taskId, status)
+      } else if (onTaskUpdate) {
+        onTaskUpdate({ ...task, status, updatedAt: new Date().toISOString() })
+      }
     }
     
     setDraggedOver(null)
@@ -134,12 +141,22 @@ export function KanbanBoard({ tasks, onTaskUpdate, onCreateTask }: KanbanBoardPr
                   key={task.id}
                   task={task}
                   onStatusChange={(taskId, newStatus) => {
-                    const updatedTask = tasks.find(t => t.id === taskId)
-                    if (updatedTask) {
-                      onTaskUpdate({ ...updatedTask, status: newStatus, updatedAt: new Date().toISOString() })
+                    if (onUpdateTaskStatus) {
+                      onUpdateTaskStatus(taskId, newStatus)
+                    } else if (onTaskUpdate) {
+                      const updatedTask = tasks.find(t => t.id === taskId)
+                      if (updatedTask) {
+                        onTaskUpdate({ ...updatedTask, status: newStatus, updatedAt: new Date().toISOString() })
+                      }
                     }
                   }}
-                  onEdit={onTaskUpdate}
+                  onEdit={(task) => {
+                    if (onEditTask) {
+                      onEditTask(task)
+                    } else if (onTaskUpdate) {
+                      onTaskUpdate(task)
+                    }
+                  }}
                 />
               ))}
               
