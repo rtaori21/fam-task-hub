@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useTheme } from "next-themes"
 import { Settings as SettingsIcon, User, Bell, Palette, Download, Upload, Save, Moon, Sun } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,12 +12,11 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 
-interface SettingsProps {
-  onThemeChange?: (theme: 'light' | 'dark' | 'system') => void
-}
+interface SettingsProps {}
 
-export function Settings({ onThemeChange }: SettingsProps) {
+export function Settings({}: SettingsProps) {
   const { toast } = useToast()
+  const { theme, setTheme } = useTheme()
   const [isDirty, setIsDirty] = useState(false)
 
   // User Profile Settings
@@ -40,13 +40,20 @@ export function Settings({ onThemeChange }: SettingsProps) {
 
   // App Preferences
   const [preferences, setPreferences] = useState({
-    theme: 'system' as 'light' | 'dark' | 'system',
+    theme: (theme as 'light' | 'dark' | 'system') || 'system',
     timeFormat: '12h' as '12h' | '24h',
     weekStart: 'monday' as 'sunday' | 'monday',
     defaultView: 'dashboard' as 'dashboard' | 'kanban' | 'calendar',
     autoSave: true,
     compactMode: false
   })
+
+  // Update preferences.theme when theme changes
+  useEffect(() => {
+    if (theme) {
+      setPreferences(prev => ({ ...prev, theme: theme as 'light' | 'dark' | 'system' }))
+    }
+  }, [theme])
 
   const handleSave = () => {
     // In a real app, this would save to backend/localStorage
@@ -122,8 +129,9 @@ export function Settings({ onThemeChange }: SettingsProps) {
     setPreferences(prev => ({ ...prev, ...updates }))
     setIsDirty(true)
     
-    if (updates.theme && onThemeChange) {
-      onThemeChange(updates.theme)
+    // Handle theme change specifically
+    if (updates.theme) {
+      setTheme(updates.theme)
     }
   }
 
