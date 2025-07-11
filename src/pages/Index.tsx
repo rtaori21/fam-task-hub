@@ -4,6 +4,7 @@ import { Dashboard } from '@/components/Dashboard'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { FamilyMembers } from '@/components/FamilyMembers'
 import { CreateTaskModal } from '@/components/CreateTaskModal'
+import { Settings } from '@/components/Settings'
 import { CalendarView } from '@/components/CalendarView'
 import { CreateEventModal } from '@/components/CreateEventModal'
 import { Task, TaskStatus } from '@/types'
@@ -175,7 +176,7 @@ const Index = () => {
       case 'members':
         return <FamilyMembers />
       case 'settings':
-        return <div className="text-center py-12 text-muted-foreground">Settings - Coming Soon</div>
+        return <Settings />
       default:
         return <Dashboard tasks={tasks} onCreateTask={handleCreateTask} />
     }
