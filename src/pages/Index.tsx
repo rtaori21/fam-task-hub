@@ -4,12 +4,20 @@ import { Dashboard } from '@/components/Dashboard'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { FamilyMembers } from '@/components/FamilyMembers'
 import { CreateTaskModal } from '@/components/CreateTaskModal'
+import { CalendarView } from '@/components/CalendarView'
+import { CreateEventModal } from '@/components/CreateEventModal'
 import { Task, TaskStatus } from '@/types'
+import { CalendarEvent, TimeBlock } from '@/types/calendar'
 
 const Index = () => {
   const [currentView, setCurrentView] = useState('dashboard')
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false)
+  const [eventModalInitialStart, setEventModalInitialStart] = useState<Date | undefined>()
+  const [eventModalInitialEnd, setEventModalInitialEnd] = useState<Date | undefined>()
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([])
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
@@ -95,6 +103,48 @@ const Index = () => {
     ))
   }
 
+  // Calendar handlers
+  const handleCreateEvent = (start: Date, end: Date) => {
+    setEventModalInitialStart(start)
+    setEventModalInitialEnd(end)
+    setIsCreateEventOpen(true)
+  }
+
+  const handleCreateTimeBlock = () => {
+    const now = new Date()
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000)
+    setEventModalInitialStart(now)
+    setEventModalInitialEnd(oneHourLater)
+    setIsCreateEventOpen(true)
+  }
+
+  const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
+    const newEvent: CalendarEvent = {
+      ...eventData,
+      id: Math.random().toString(36).substr(2, 9),
+    }
+    setCalendarEvents(prev => [...prev, newEvent])
+    setIsCreateEventOpen(false)
+    setEventModalInitialStart(undefined)
+    setEventModalInitialEnd(undefined)
+  }
+
+  const handleSaveTimeBlock = (timeBlockData: Omit<TimeBlock, 'id'>) => {
+    const newTimeBlock: TimeBlock = {
+      ...timeBlockData,
+      id: Math.random().toString(36).substr(2, 9),
+    }
+    setTimeBlocks(prev => [...prev, newTimeBlock])
+    setIsCreateEventOpen(false)
+    setEventModalInitialStart(undefined)
+    setEventModalInitialEnd(undefined)
+  }
+
+  const handleEventSelect = (event: CalendarEvent) => {
+    // Handle event selection - could open an edit modal in the future
+    console.log('Selected event:', event)
+  }
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
@@ -110,7 +160,16 @@ const Index = () => {
           />
         )
       case 'calendar':
-        return <div className="text-center py-12 text-muted-foreground">Calendar View - Coming Soon</div>
+        return (
+          <CalendarView 
+            tasks={tasks}
+            events={calendarEvents}
+            timeBlocks={timeBlocks}
+            onEventSelect={handleEventSelect}
+            onCreateEvent={handleCreateEvent}
+            onCreateTimeBlock={handleCreateTimeBlock}
+          />
+        )
       case 'notifications':
         return <div className="text-center py-12 text-muted-foreground">Notifications - Coming Soon</div>
       case 'members':
@@ -140,6 +199,19 @@ const Index = () => {
         }}
         onSave={handleSaveTask}
         editingTask={editingTask || undefined}
+      />
+
+      <CreateEventModal
+        isOpen={isCreateEventOpen}
+        onClose={() => {
+          setIsCreateEventOpen(false)
+          setEventModalInitialStart(undefined)
+          setEventModalInitialEnd(undefined)
+        }}
+        onSaveEvent={handleSaveEvent}
+        onSaveTimeBlock={handleSaveTimeBlock}
+        initialStart={eventModalInitialStart}
+        initialEnd={eventModalInitialEnd}
       />
     </>
   )
