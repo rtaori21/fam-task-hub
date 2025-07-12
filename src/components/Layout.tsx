@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFamilyData } from '@/hooks/useFamilyData'
+import { useFamilySetupCheck } from '@/hooks/useFamilySetupCheck'
+import { CompleteFamilySetup } from '@/components/CompleteFamilySetup'
 import { toast } from 'sonner'
 
 interface LayoutProps {
@@ -25,7 +27,8 @@ const navigation = [
 
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
-  const { familyInfo, profile, loading, error } = useFamilyData();
+  const { familyInfo, profile, loading } = useFamilyData();
+  const { needsSetup, loading: setupLoading } = useFamilySetupCheck();
 
   const handleSignOut = async () => {
     try {
@@ -37,7 +40,7 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
   };
 
   // Show loading state
-  if (loading) {
+  if (loading || setupLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="text-center">
@@ -46,6 +49,11 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
         </div>
       </div>
     );
+  }
+
+  // Show family setup if user needs to complete setup
+  if (needsSetup) {
+    return <CompleteFamilySetup onComplete={() => window.location.reload()} />;
   }
 
   return (

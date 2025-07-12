@@ -76,13 +76,7 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Handle post-signup logic
-        if (type === 'admin') {
-          await createFamily(data.user.id);
-        } else {
-          await joinFamily(data.user.id);
-        }
-
+        // Don't create family here - do it after email verification and signin
         toast.success("Account created! Please check your email and click the verification link before signing in.", {
           duration: 8000
         });
