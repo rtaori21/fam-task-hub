@@ -7,8 +7,9 @@ import { CreateTaskModal } from '@/components/CreateTaskModal'
 import { Settings } from '@/components/Settings'
 import { CalendarView } from '@/components/CalendarView'
 import { CreateEventModal } from '@/components/CreateEventModal'
+import { NotificationCenter } from '@/components/NotificationCenter'
 import { Task, TaskStatus } from '@/types'
-import { CalendarEvent, TimeBlock } from '@/types/calendar'
+import { CalendarEvent, TimeBlock, NotificationSettings } from '@/types/calendar'
 
 const Index = () => {
   const [currentView, setCurrentView] = useState('dashboard')
@@ -19,6 +20,13 @@ const Index = () => {
   const [eventModalInitialEnd, setEventModalInitialEnd] = useState<Date | undefined>()
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
   const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([])
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    dailySummary: true,
+    taskAssigned: true,
+    taskDueSoon: true,
+    taskOverdue: true,
+    summaryTime: '08:00'
+  })
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
@@ -172,7 +180,15 @@ const Index = () => {
           />
         )
       case 'notifications':
-        return <div className="text-center py-12 text-muted-foreground">Notifications - Coming Soon</div>
+        return (
+          <div className="max-w-md mx-auto">
+            <NotificationCenter 
+              tasks={tasks}
+              settings={notificationSettings}
+              onSettingsChange={setNotificationSettings}
+            />
+          </div>
+        )
       case 'members':
         return <FamilyMembers />
       case 'settings':
