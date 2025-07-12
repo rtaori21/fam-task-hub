@@ -204,12 +204,17 @@ export function FamilyMembers() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => console.log('Manage member:', member.id)}>
                       <Settings className="h-4 w-4 mr-2" />
                       Manage
                     </DropdownMenuItem>
                     {member.role !== 'admin' && (
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => {
+                          setMembers(prev => prev.filter(m => m.id !== member.id))
+                        }}
+                      >
                         Remove
                       </DropdownMenuItem>
                     )}

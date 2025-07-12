@@ -22,11 +22,11 @@ export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
     return new Date(task.dueDate) < new Date() && task.status !== 'done'
   })
 
-  const completedThisWeek = tasks.filter(task => {
+  const completedThisMonth = tasks.filter(task => {
     if (task.status !== 'done') return false
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return new Date(task.updatedAt) > weekAgo
+    const monthAgo = new Date()
+    monthAgo.setDate(monthAgo.getDate() - 30)
+    return new Date(task.updatedAt) > monthAgo
   })
 
   const stats = [
@@ -38,8 +38,8 @@ export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
       bgColor: 'bg-status-todo/10'
     },
     {
-      title: 'Completed This Week',
-      value: completedThisWeek.length,
+      title: 'Completed This Month',
+      value: completedThisMonth.length,
       icon: CheckCircle2,
       color: 'text-status-done',
       bgColor: 'bg-status-done/10'
@@ -72,7 +72,7 @@ export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
         </p>
         <Button onClick={onCreateTask} className="mt-4" size="lg">
           <Plus className="h-5 w-5 mr-2" />
-          Create Your First Task
+          Create New Task
         </Button>
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from "next-themes"
-import { Settings as SettingsIcon, User, Bell, Palette, Download, Upload, Save, Moon, Sun } from 'lucide-react'
+import { Settings as SettingsIcon, User, Bell, Palette, Save, Moon, Sun } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,56 +64,6 @@ export function Settings({}: SettingsProps) {
     setIsDirty(false)
   }
 
-  const handleExportData = () => {
-    // In a real app, this would export all user data
-    const data = {
-      userProfile,
-      notifications,
-      preferences,
-      exportDate: new Date().toISOString()
-    }
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'family-planner-settings.json'
-    a.click()
-    URL.revokeObjectURL(url)
-
-    toast({
-      title: "Data Exported",
-      description: "Your settings have been exported successfully.",
-    })
-  }
-
-  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string)
-        if (data.userProfile) setUserProfile(data.userProfile)
-        if (data.notifications) setNotifications(data.notifications)
-        if (data.preferences) setPreferences(data.preferences)
-        
-        toast({
-          title: "Data Imported",
-          description: "Your settings have been imported successfully.",
-        })
-        setIsDirty(true)
-      } catch (error) {
-        toast({
-          title: "Import Failed",
-          description: "Failed to import settings. Please check the file format.",
-          variant: "destructive"
-        })
-      }
-    }
-    reader.readAsText(file)
-  }
 
   const updateUserProfile = (updates: Partial<typeof userProfile>) => {
     setUserProfile(prev => ({ ...prev, ...updates }))
@@ -162,7 +112,7 @@ export function Settings({}: SettingsProps) {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
@@ -174,10 +124,6 @@ export function Settings({}: SettingsProps) {
           <TabsTrigger value="preferences" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
             Preferences
-          </TabsTrigger>
-          <TabsTrigger value="data" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Data
           </TabsTrigger>
         </TabsList>
 
@@ -454,67 +400,6 @@ export function Settings({}: SettingsProps) {
           </Card>
         </TabsContent>
 
-        {/* Data Management */}
-        <TabsContent value="data">
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Management</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="font-medium">Export Data</h4>
-                <p className="text-sm text-muted-foreground">
-                  Download your settings, tasks, and calendar data as a backup
-                </p>
-                <Button onClick={handleExportData} variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Settings
-                </Button>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Import Data</h4>
-                <p className="text-sm text-muted-foreground">
-                  Restore your settings from a previously exported file
-                </p>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportData}
-                    className="hidden"
-                    id="import-file"
-                  />
-                  <Button asChild variant="outline">
-                    <label htmlFor="import-file" className="cursor-pointer">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Import Settings
-                    </label>
-                  </Button>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium text-destructive">Danger Zone</h4>
-                <div className="p-4 border border-destructive/20 rounded-lg space-y-4">
-                  <div>
-                    <h5 className="font-medium">Reset All Settings</h5>
-                    <p className="text-sm text-muted-foreground">
-                      This will reset all your preferences to default values
-                    </p>
-                  </div>
-                  <Button variant="destructive" size="sm">
-                    Reset Settings
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   )
