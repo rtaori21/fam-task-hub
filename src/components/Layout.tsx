@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import { useFamilyData } from '@/hooks/useFamilyData'
 import { toast } from 'sonner'
 
 interface LayoutProps {
@@ -24,6 +25,7 @@ const navigation = [
 
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
+  const { familyInfo, profile } = useFamilyData();
 
   const handleSignOut = async () => {
     try {
@@ -46,7 +48,9 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-foreground">Family Home</h1>
-                <p className="text-xs text-muted-foreground">The Johnson Family</p>
+                <p className="text-xs text-muted-foreground">
+                  {familyInfo ? familyInfo.name : 'Loading...'}
+                </p>
               </div>
             </div>
 

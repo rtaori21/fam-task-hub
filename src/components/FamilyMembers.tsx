@@ -19,6 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useFamilyData } from '@/hooks/useFamilyData'
+import { FamilyCodeShare } from '@/components/FamilyCodeShare'
 
 interface FamilyMember {
   id: string
@@ -71,12 +73,24 @@ const initialMembers: FamilyMember[] = [
 ]
 
 export function FamilyMembers() {
+  const { familyInfo, loading } = useFamilyData();
   const [members, setMembers] = useState<FamilyMember[]>(initialMembers)
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isManageOpen, setIsManageOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading family information...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleInvite = () => {
     if (!inviteEmail.trim() || !inviteName.trim()) return
@@ -131,11 +145,16 @@ export function FamilyMembers() {
           <h1 className="text-2xl font-bold text-foreground">Family Members</h1>
           <p className="text-muted-foreground">Manage your family workspace</p>
         </div>
-        <Button onClick={() => setIsInviteOpen(true)} className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Invite Member
-        </Button>
       </div>
+
+      {/* Family Code Share Section */}
+      {familyInfo && (
+        <FamilyCodeShare 
+          familyName={familyInfo.name}
+          joinCode={familyInfo.join_code}
+          isAdmin={familyInfo.role === 'family_admin'}
+        />
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -70,10 +70,23 @@ export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
         <p className="text-muted-foreground max-w-md mx-auto">
           Keep your family organized and coordinated with simple task management
         </p>
-        <Button onClick={onCreateTask} className="mt-4" size="lg">
-          <Plus className="h-5 w-5 mr-2" />
-          Create New Task
-        </Button>
+        {tasks.length === 0 ? (
+          <div className="mt-8 p-6 bg-muted/50 rounded-lg max-w-lg mx-auto">
+            <h3 className="text-lg font-semibold mb-2">Get Started</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first task to start organizing your family activities
+            </p>
+            <Button onClick={onCreateTask} size="lg">
+              <Plus className="h-5 w-5 mr-2" />
+              Create Your First Task
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={onCreateTask} className="mt-4" size="lg">
+            <Plus className="h-5 w-5 mr-2" />
+            Create New Task
+          </Button>
+        )}
       </div>
 
       {/* Stats Grid */}

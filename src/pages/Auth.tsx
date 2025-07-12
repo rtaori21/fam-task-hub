@@ -82,8 +82,10 @@ const Auth = () => {
           await joinFamily(data.user.id);
         }
 
-        toast.success("Account created successfully! Please check your email to verify your account.");
-        navigate("/");
+        toast.success("Account created! Please check your email and click the verification link before signing in.", {
+          duration: 8000
+        });
+        // Don't navigate immediately - user needs to verify email first
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred during signup");
@@ -230,6 +232,9 @@ const Auth = () => {
 
             <TabsContent value="signin" className="space-y-4">
               <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                  <strong>Note:</strong> If you just created an account, please check your email and click the verification link before signing in.
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <Input

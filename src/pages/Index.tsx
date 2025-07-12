@@ -27,41 +27,7 @@ const Index = () => {
     taskOverdue: true,
     summaryTime: '08:00'
   })
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Grocery Shopping',
-      description: 'Buy groceries for the week',
-      status: 'todo',
-      priority: 'high',
-      assignee: 'Alice',
-      dueDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: 'Fix Bedroom Light',
-      description: 'Replace the broken light bulb in the bedroom',
-      status: 'progress',
-      priority: 'medium',
-      assignee: 'Bob',
-      dueDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      title: 'Plan Family Movie Night',
-      description: 'Choose a movie and prepare snacks',
-      status: 'done',
-      priority: 'low',
-      assignee: 'Charlie',
-      dueDate: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ])
+  const [tasks, setTasks] = useState<Task[]>([])
 
   const handleCreateTask = (status?: TaskStatus) => {
     setEditingTask(null)
