@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, User, Mail, MoreHorizontal, UserPlus, Settings } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useFamilyData } from '@/hooks/useFamilyData'
+import { useFamilyMembers } from '@/hooks/useFamilyMembers'
 import { FamilyCodeShare } from '@/components/FamilyCodeShare'
 
 interface FamilyMember {
@@ -36,13 +37,32 @@ interface FamilyMember {
 const initialMembers: FamilyMember[] = []
 
 export function FamilyMembers() {
-  const { familyInfo, loading } = useFamilyData();
-  const [members, setMembers] = useState<FamilyMember[]>(initialMembers)
+  const { familyInfo, loading: familyLoading } = useFamilyData();
+  const { members: realMembers, loading: membersLoading } = useFamilyMembers();
+  const [members, setMembers] = useState<FamilyMember[]>([]);
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isManageOpen, setIsManageOpen] = useState(false)
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
+  
+  const loading = familyLoading || membersLoading;
+
+  // Convert real members to display format
+  useEffect(() => {
+    if (realMembers) {
+      const displayMembers: FamilyMember[] = realMembers.map(member => ({
+        id: member.id,
+        name: member.name,
+        email: member.email || 'N/A',
+        role: member.role === 'family_admin' ? 'admin' : 'member',
+        joinedAt: new Date(member.joinedAt).toISOString().split('T')[0],
+        tasksAssigned: 0, // TODO: Calculate from actual tasks
+        tasksCompleted: 0 // TODO: Calculate from actual tasks
+      }));
+      setMembers(displayMembers);
+    }
+  }, [realMembers]);
 
   if (loading) {
     return (

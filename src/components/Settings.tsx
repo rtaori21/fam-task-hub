@@ -11,21 +11,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/contexts/AuthContext'
+import { useFamilyData } from '@/hooks/useFamilyData'
 
 interface SettingsProps {}
 
 export function Settings({}: SettingsProps) {
   const { toast } = useToast()
   const { theme, setTheme } = useTheme()
+  const { user } = useAuth()
+  const { profile, familyInfo } = useFamilyData()
   const [isDirty, setIsDirty] = useState(false)
 
   // User Profile Settings
   const [userProfile, setUserProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@email.com',
+    name: '',
+    email: '',
     role: 'Parent',
     avatar: ''
   })
+
+  // Load user data when profile is available
+  useEffect(() => {
+    if (profile && user) {
+      setUserProfile({
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        email: user.email || '',
+        role: familyInfo?.role === 'family_admin' ? 'Admin' : 'Member',
+        avatar: ''
+      });
+    }
+  }, [profile, user, familyInfo]);
 
   // Notification Settings
   const [notifications, setNotifications] = useState({

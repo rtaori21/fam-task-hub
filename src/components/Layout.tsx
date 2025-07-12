@@ -47,7 +47,7 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
                 <Home className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-foreground">Family Home</h1>
+                <h1 className="text-lg font-semibold text-foreground">FamPlan</h1>
                 <p className="text-xs text-muted-foreground">
                   {familyInfo ? familyInfo.name : 'Loading...'}
                 </p>
