@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFamilyData } from '@/hooks/useFamilyData'
-import { FamilySetup } from '@/components/FamilySetup'
 import { toast } from 'sonner'
 
 interface LayoutProps {
@@ -27,7 +26,6 @@ const navigation = [
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
   const { familyInfo, profile, loading, error } = useFamilyData();
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSignOut = async () => {
     try {
@@ -38,17 +36,16 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
     }
   };
 
-  const handleFamilySetupComplete = useCallback(() => {
-    setRefreshKey(prev => prev + 1);
-    // Force a page reload to ensure all data is refreshed
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-  }, []);
-
-  // Show family setup if user has no family
-  if (!loading && !familyInfo && !error) {
-    return <FamilySetup onComplete={handleFamilySetupComplete} />;
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
