@@ -73,6 +73,8 @@ const initialMembers: FamilyMember[] = [
 export function FamilyMembers() {
   const [members, setMembers] = useState<FamilyMember[]>(initialMembers)
   const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [isManageOpen, setIsManageOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
 
@@ -93,6 +95,23 @@ export function FamilyMembers() {
     setInviteEmail('')
     setInviteName('')
     setIsInviteOpen(false)
+  }
+
+  const handleManage = (member: FamilyMember) => {
+    setSelectedMember(member)
+    setIsManageOpen(true)
+  }
+
+  const handleUpdateMember = () => {
+    if (!selectedMember) return
+    
+    // Update the member in the list
+    setMembers(prev => prev.map(member => 
+      member.id === selectedMember.id ? selectedMember : member
+    ))
+    
+    setIsManageOpen(false)
+    setSelectedMember(null)
   }
 
   const getInitials = (name: string) => {
@@ -204,7 +223,7 @@ export function FamilyMembers() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => console.log('Manage member:', member.id)}>
+                    <DropdownMenuItem onClick={() => handleManage(member)}>
                       <Settings className="h-4 w-4 mr-2" />
                       Manage
                     </DropdownMenuItem>
@@ -280,6 +299,58 @@ export function FamilyMembers() {
             </Button>
             <Button onClick={handleInvite} disabled={!inviteEmail.trim() || !inviteName.trim()}>
               Send Invite
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Member Modal */}
+      <Dialog open={isManageOpen} onOpenChange={setIsManageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Family Member</DialogTitle>
+          </DialogHeader>
+          
+          {selectedMember && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="manage-name">Name</Label>
+                <Input
+                  id="manage-name"
+                  value={selectedMember.name}
+                  onChange={(e) => setSelectedMember(prev => prev ? {...prev, name: e.target.value} : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="manage-email">Email</Label>
+                <Input
+                  id="manage-email"
+                  type="email"
+                  value={selectedMember.email}
+                  onChange={(e) => setSelectedMember(prev => prev ? {...prev, email: e.target.value} : null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="manage-role">Role</Label>
+                <select 
+                  id="manage-role"
+                  value={selectedMember.role}
+                  onChange={(e) => setSelectedMember(prev => prev ? {...prev, role: e.target.value as 'admin' | 'member'} : null)}
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                >
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsManageOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateMember}>
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>

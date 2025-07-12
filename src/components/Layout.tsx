@@ -77,7 +77,7 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
 
               {/* Quick Stats */}
               <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-sm font-medium text-foreground mb-3">Quick Stats</h3>
+                <h3 className="text-sm font-medium text-foreground mb-3">Monthly</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Active Tasks</span>
