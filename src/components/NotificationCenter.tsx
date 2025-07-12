@@ -26,25 +26,7 @@ interface Notification {
 }
 
 export function NotificationCenter({ tasks, settings, onSettingsChange }: NotificationCenterProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'task_due',
-      title: 'Task Due Soon',
-      message: 'Grocery Shopping is due in 2 hours',
-      time: new Date(),
-      read: false,
-      actionable: true
-    },
-    {
-      id: '2', 
-      type: 'daily_summary',
-      title: 'Daily Summary',
-      message: 'You have 3 tasks scheduled for today',
-      time: new Date(Date.now() - 60 * 60 * 1000),
-      read: true
-    }
-  ])
+  const [notifications, setNotifications] = useState<Notification[]>([])
 
   const [showSettings, setShowSettings] = useState(false)
 

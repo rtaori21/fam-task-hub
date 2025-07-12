@@ -98,20 +98,9 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
 
               {/* Quick Stats */}
               <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-sm font-medium text-foreground mb-3">Monthly</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Active Tasks</span>
-                    <span className="font-medium text-foreground">12</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Completed</span>
-                    <span className="font-medium text-status-done">8</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Family Members</span>
-                    <span className="font-medium text-foreground">4</span>
-                  </div>
+                <h3 className="text-sm font-medium text-foreground mb-3">Welcome</h3>
+                <div className="text-sm text-muted-foreground">
+                  <p>Welcome to your family dashboard! Start by creating tasks and inviting family members.</p>
                 </div>
               </div>
             </Card>

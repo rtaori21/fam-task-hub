@@ -33,44 +33,7 @@ interface FamilyMember {
   tasksCompleted: number
 }
 
-const initialMembers: FamilyMember[] = [
-  {
-    id: '1',
-    name: 'Alice Johnson',
-    email: 'alice@family.com',
-    role: 'admin',
-    joinedAt: '2024-01-01',
-    tasksAssigned: 5,
-    tasksCompleted: 3,
-  },
-  {
-    id: '2',
-    name: 'Bob Johnson',
-    email: 'bob@family.com',
-    role: 'member',
-    joinedAt: '2024-01-01',
-    tasksAssigned: 4,
-    tasksCompleted: 2,
-  },
-  {
-    id: '3',
-    name: 'Charlie Johnson',
-    email: 'charlie@family.com',
-    role: 'member',
-    joinedAt: '2024-01-01',
-    tasksAssigned: 3,
-    tasksCompleted: 3,
-  },
-  {
-    id: '4',
-    name: 'Diana Johnson',
-    email: 'diana@family.com',
-    role: 'member',
-    joinedAt: '2024-01-15',
-    tasksAssigned: 2,
-    tasksCompleted: 1,
-  },
-]
+const initialMembers: FamilyMember[] = []
 
 export function FamilyMembers() {
   const { familyInfo, loading } = useFamilyData();

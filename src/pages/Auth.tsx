@@ -20,6 +20,7 @@ const Auth = () => {
   const [joinCode, setJoinCode] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+  const [showEmailNote, setShowEmailNote] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,6 +86,7 @@ const Auth = () => {
         toast.success("Account created! Please check your email and click the verification link before signing in.", {
           duration: 8000
         });
+        setShowEmailNote(true);
         // Don't navigate immediately - user needs to verify email first
       }
     } catch (error: any) {
@@ -232,9 +234,11 @@ const Auth = () => {
 
             <TabsContent value="signin" className="space-y-4">
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
-                  <strong>Note:</strong> If you just created an account, please check your email and click the verification link before signing in.
-                </div>
+                {showEmailNote && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                    <strong>Note:</strong> Please check your email and click the verification link before signing in.
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <Input
