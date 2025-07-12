@@ -113,12 +113,20 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_user_family_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _user_id: string
           _family_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      is_family_admin: {
+        Args: { check_family_id: string }
         Returns: boolean
       }
     }

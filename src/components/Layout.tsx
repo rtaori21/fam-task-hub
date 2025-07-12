@@ -49,7 +49,7 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
               <div>
                 <h1 className="text-lg font-semibold text-foreground">FamPlan</h1>
                 <p className="text-xs text-muted-foreground">
-                  {familyInfo ? familyInfo.name : 'Loading...'}
+                  {familyInfo ? familyInfo.name : 'Welcome to FamPlan'}
                 </p>
               </div>
             </div>

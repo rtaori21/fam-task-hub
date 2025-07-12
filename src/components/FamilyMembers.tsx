@@ -131,12 +131,20 @@ export function FamilyMembers() {
       </div>
 
       {/* Family Code Share Section */}
-      {familyInfo && (
+      {familyInfo ? (
         <FamilyCodeShare 
           familyName={familyInfo.name}
           joinCode={familyInfo.join_code}
           isAdmin={familyInfo.role === 'family_admin'}
         />
+      ) : (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-muted-foreground">
+              {loading ? 'Loading family information...' : 'Please try refreshing the page to see your family join code.'}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Stats Cards */}
