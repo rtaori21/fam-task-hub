@@ -33,7 +33,7 @@ export function useFamilyMembers() {
           .from('user_roles')
           .select('family_id')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (roleError || !userRole) {
           console.error('Error getting user family:', roleError);

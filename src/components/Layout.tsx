@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Home, Kanban, Calendar, Settings, Users, Plus, Bell, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -27,6 +27,7 @@ const navigation = [
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
   const { familyInfo, profile, loading, error } = useFamilyData();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSignOut = async () => {
     try {
@@ -37,9 +38,17 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
     }
   };
 
+  const handleFamilySetupComplete = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+    // Force a page reload to ensure all data is refreshed
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
+  }, []);
+
   // Show family setup if user has no family
   if (!loading && !familyInfo && !error) {
-    return <FamilySetup onComplete={() => window.location.reload()} />;
+    return <FamilySetup onComplete={handleFamilySetupComplete} />;
   }
 
   return (

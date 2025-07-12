@@ -37,7 +37,7 @@ export function useFamilyData() {
           .from('profiles')
           .select('first_name, last_name')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error('Profile error:', profileError);
@@ -58,7 +58,7 @@ export function useFamilyData() {
             )
           `)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (roleError) {
           console.error('Family data error:', roleError);
