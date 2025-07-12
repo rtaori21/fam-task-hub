@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Home, Kanban, Calendar, Settings, Users, Plus, Bell } from 'lucide-react'
+import { Home, Kanban, Calendar, Settings, Users, Plus, Bell, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from 'sonner'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -21,6 +23,17 @@ const navigation = [
 ]
 
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
+  const { signOut, user } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign out");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
@@ -41,6 +54,10 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
               <Button onClick={onCreateTask} size="sm" variant="gradient">
                 <Plus className="h-4 w-4 mr-1" />
                 New Task
+              </Button>
+              <Button onClick={handleSignOut} size="sm" variant="outline">
+                <LogOut className="h-4 w-4 mr-1" />
+                Sign Out
               </Button>
             </div>
           </div>
