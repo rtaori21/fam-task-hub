@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFamilyData } from '@/hooks/useFamilyData'
+import { FamilySetup } from '@/components/FamilySetup'
 import { toast } from 'sonner'
 
 interface LayoutProps {
@@ -25,7 +26,7 @@ const navigation = [
 
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
-  const { familyInfo, profile } = useFamilyData();
+  const { familyInfo, profile, loading, error } = useFamilyData();
 
   const handleSignOut = async () => {
     try {
@@ -35,6 +36,11 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
       toast.error(error.message || "Failed to sign out");
     }
   };
+
+  // Show family setup if user has no family
+  if (!loading && !familyInfo && !error) {
+    return <FamilySetup onComplete={() => window.location.reload()} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
