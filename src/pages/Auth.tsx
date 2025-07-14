@@ -92,11 +92,20 @@ const Auth = () => {
 
   const createFamily = async (userId: string) => {
     try {
+      // Get the family name from user metadata or state
+      const { data: { user } } = await supabase.auth.getUser();
+      const metaFamilyName = user?.user_metadata?.family_name || familyName;
+      
+      if (!metaFamilyName) {
+        toast.error("Family name not found");
+        return;
+      }
+
       // Create family
       const { data: family, error: familyError } = await supabase
         .from('families')
         .insert([{
-          name: familyName,
+          name: metaFamilyName,
           created_by: userId,
           join_code: 'TEMP' // Will be replaced by trigger
         }])
@@ -116,19 +125,29 @@ const Auth = () => {
 
       if (roleError) throw roleError;
 
-      toast.success(`Family "${familyName}" created! Your join code is: ${family.join_code}`);
+      toast.success(`Family "${metaFamilyName}" created! Your join code is: ${family.join_code}`);
     } catch (error: any) {
+      console.error('Error creating family:', error);
       toast.error(error.message || "Failed to create family");
     }
   };
 
   const joinFamily = async (userId: string) => {
     try {
+      // Get the join code from user metadata or state
+      const { data: { user } } = await supabase.auth.getUser();
+      const metaJoinCode = user?.user_metadata?.join_code || joinCode;
+      
+      if (!metaJoinCode) {
+        toast.error("Join code not found");
+        return;
+      }
+
       // Find family by join code
       const { data: family, error: familyError } = await supabase
         .from('families')
         .select('*')
-        .eq('join_code', joinCode.toUpperCase())
+        .eq('join_code', metaJoinCode.toUpperCase())
         .single();
 
       if (familyError) {
@@ -149,6 +168,7 @@ const Auth = () => {
 
       toast.success(`Successfully joined "${family.name}" family!`);
     } catch (error: any) {
+      console.error('Error joining family:', error);
       toast.error(error.message || "Failed to join family");
     }
   };
@@ -162,7 +182,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -170,6 +190,21 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
         return;
+      }
+
+      if (data.user) {
+        // Check if user has family metadata and needs setup
+        const signupType = data.user.user_metadata?.signup_type;
+        const familyName = data.user.user_metadata?.family_name;
+        const joinCode = data.user.user_metadata?.join_code;
+
+        if (signupType === 'admin' && familyName) {
+          // Create family for admin user
+          await createFamily(data.user.id);
+        } else if (signupType === 'member' && joinCode) {
+          // Join family for member user
+          await joinFamily(data.user.id);
+        }
       }
 
       toast.success("Welcome back!");
