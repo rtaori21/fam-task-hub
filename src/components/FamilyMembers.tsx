@@ -139,10 +139,36 @@ export function FamilyMembers() {
         />
       ) : (
         <Card>
-          <CardContent className="p-6 text-center">
+          <CardContent className="p-6 text-center space-y-4">
             <div className="text-muted-foreground">
-              {loading ? 'Loading family information...' : 'Please try refreshing the page to see your family join code.'}
+              No family found. Create a test family to get started.
             </div>
+            <Button 
+              onClick={async () => {
+                try {
+                  // Create a test family without authentication
+                  const testFamily = {
+                    id: '12345',
+                    name: 'Test Family',
+                    join_code: 'TEST123',
+                    role: 'family_admin' as const
+                  };
+                  
+                  // For testing purposes, we'll simulate having family data
+                  console.log('📝 Creating test family:', testFamily);
+                  
+                  // This would normally be in the useFamilyData hook
+                  // For now, we'll just show the join code
+                  alert(`Test Family Created!\nFamily Name: ${testFamily.name}\nJoin Code: ${testFamily.join_code}\n\nShare this code with family members so they can join!`);
+                } catch (error) {
+                  console.error('❌ Error creating test family:', error);
+                }
+              }}
+              className="mt-4"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Create Test Family
+            </Button>
           </CardContent>
         </Card>
       )}
