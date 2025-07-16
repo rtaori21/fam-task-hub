@@ -93,28 +93,26 @@ const Auth = () => {
   const createFamily = async (userId: string) => {
     console.log('🏠 Starting family creation for user:', userId);
     try {
-      // Get the family name from user metadata or state
+      // Get the family name from user metadata
       const { data: { user } } = await supabase.auth.getUser();
-      const metaFamilyName = user?.user_metadata?.family_name || familyName;
+      const familyName = user?.user_metadata?.family_name;
       
-      console.log('🏠 User metadata:', user?.user_metadata);
-      console.log('🏠 Family name from metadata:', metaFamilyName);
-      console.log('🏠 Family name from state:', familyName);
+      console.log('🏠 Family name from metadata:', familyName);
       
-      if (!metaFamilyName) {
+      if (!familyName) {
         console.error('❌ Family name not found');
         toast.error("Family name not found");
         return;
       }
 
-      console.log('🏠 Creating family with name:', metaFamilyName);
-      // Create family
+      console.log('🏠 Creating family with name:', familyName);
+      // Create family - the trigger will automatically generate a unique join code
       const { data: family, error: familyError } = await supabase
         .from('families')
         .insert([{
-          name: metaFamilyName,
+          name: familyName,
           created_by: userId,
-          join_code: 'TEMP' // Will be replaced by trigger
+          join_code: 'TEMP' // This will be replaced by the database trigger
         }])
         .select()
         .single();
@@ -145,7 +143,7 @@ const Auth = () => {
       }
 
       console.log('✅ Family setup completed successfully!');
-      toast.success(`Family "${metaFamilyName}" created! Your join code is: ${family.join_code}`);
+      toast.success(`Family "${familyName}" created! Your join code is: ${family.join_code}`);
     } catch (error: any) {
       console.error('❌ Error creating family:', error);
       toast.error(error.message || "Failed to create family");
@@ -154,11 +152,11 @@ const Auth = () => {
 
   const joinFamily = async (userId: string) => {
     try {
-      // Get the join code from user metadata or state
+      // Get the join code from user metadata
       const { data: { user } } = await supabase.auth.getUser();
-      const metaJoinCode = user?.user_metadata?.join_code || joinCode;
+      const joinCode = user?.user_metadata?.join_code;
       
-      if (!metaJoinCode) {
+      if (!joinCode) {
         toast.error("Join code not found");
         return;
       }
@@ -167,7 +165,7 @@ const Auth = () => {
       const { data: family, error: familyError } = await supabase
         .from('families')
         .select('*')
-        .eq('join_code', metaJoinCode.toUpperCase())
+        .eq('join_code', joinCode.toUpperCase())
         .single();
 
       if (familyError) {
