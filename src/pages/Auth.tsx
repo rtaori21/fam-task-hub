@@ -30,6 +30,9 @@ const Auth = () => {
   };
 
   useEffect(() => {
+    // TEMPORARY: Disable automatic user check for testing
+    // TODO: Re-enable this when authentication is restored
+    /*
     // Check if user is already logged in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -38,6 +41,7 @@ const Auth = () => {
       }
     };
     checkUser();
+    */
   }, [navigate]);
 
   const handleSignUp = async (type: 'admin' | 'member') => {
