@@ -193,17 +193,26 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Check if user has family metadata and needs setup
-        const signupType = data.user.user_metadata?.signup_type;
-        const familyName = data.user.user_metadata?.family_name;
-        const joinCode = data.user.user_metadata?.join_code;
+        // Check if user already has a family role first
+        const { data: existingRole } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
 
-        if (signupType === 'admin' && familyName) {
-          // Create family for admin user
-          await createFamily(data.user.id);
-        } else if (signupType === 'member' && joinCode) {
-          // Join family for member user
-          await joinFamily(data.user.id);
+        if (!existingRole) {
+          // User doesn't have a family role yet, check metadata for setup
+          const signupType = data.user.user_metadata?.signup_type;
+          const familyName = data.user.user_metadata?.family_name;
+          const joinCode = data.user.user_metadata?.join_code;
+
+          if (signupType === 'admin' && familyName) {
+            // Create family for admin user
+            await createFamily(data.user.id);
+          } else if (signupType === 'member' && joinCode) {
+            // Join family for member user
+            await joinFamily(data.user.id);
+          }
         }
       }
 
