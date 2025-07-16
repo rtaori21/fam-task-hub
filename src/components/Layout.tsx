@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFamilyData } from '@/hooks/useFamilyData'
 import { toast } from 'sonner'
+import FamilySetup from '@/components/FamilySetup'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -26,6 +27,7 @@ const navigation = [
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
   const { familyInfo, profile, loading } = useFamilyData();
+  const [setupComplete, setSetupComplete] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -46,6 +48,11 @@ export function Layout({ children, currentView, onViewChange, onCreateTask }: La
         </div>
       </div>
     );
+  }
+
+  // Show family setup if user has no family info and hasn't completed setup
+  if (!familyInfo && !setupComplete) {
+    return <FamilySetup onComplete={() => setSetupComplete(true)} />;
   }
 
   return (
