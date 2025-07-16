@@ -91,16 +91,23 @@ const Auth = () => {
   };
 
   const createFamily = async (userId: string) => {
+    console.log('🏠 Starting family creation for user:', userId);
     try {
       // Get the family name from user metadata or state
       const { data: { user } } = await supabase.auth.getUser();
       const metaFamilyName = user?.user_metadata?.family_name || familyName;
       
+      console.log('🏠 User metadata:', user?.user_metadata);
+      console.log('🏠 Family name from metadata:', metaFamilyName);
+      console.log('🏠 Family name from state:', familyName);
+      
       if (!metaFamilyName) {
+        console.error('❌ Family name not found');
         toast.error("Family name not found");
         return;
       }
 
+      console.log('🏠 Creating family with name:', metaFamilyName);
       // Create family
       const { data: family, error: familyError } = await supabase
         .from('families')
@@ -112,9 +119,17 @@ const Auth = () => {
         .select()
         .single();
 
-      if (familyError) throw familyError;
+      console.log('🏠 Family creation result:', { family, familyError });
+      if (familyError) {
+        console.error('❌ Family creation error:', familyError);
+        throw familyError;
+      }
+
+      console.log('🏠 Family created successfully:', family);
+      console.log('🏠 Generated join code:', family.join_code);
 
       // Add user as family admin
+      console.log('👤 Adding user as family admin...');
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -123,11 +138,16 @@ const Auth = () => {
           role: 'family_admin'
         });
 
-      if (roleError) throw roleError;
+      console.log('👤 Role creation result:', { roleError });
+      if (roleError) {
+        console.error('❌ Role creation error:', roleError);
+        throw roleError;
+      }
 
+      console.log('✅ Family setup completed successfully!');
       toast.success(`Family "${metaFamilyName}" created! Your join code is: ${family.join_code}`);
     } catch (error: any) {
-      console.error('Error creating family:', error);
+      console.error('❌ Error creating family:', error);
       toast.error(error.message || "Failed to create family");
     }
   };
@@ -174,6 +194,7 @@ const Auth = () => {
   };
 
   const handleSignIn = async () => {
+    console.log('🔐 Starting sign in process...');
     if (!email || !password) {
       toast.error("Please enter your email and password");
       return;
@@ -182,43 +203,62 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      console.log('🔐 Attempting to sign in with email:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('🔐 Sign in result:', { user: data.user?.id, error });
       if (error) {
+        console.error('❌ Sign in error:', error);
         toast.error(error.message);
         return;
       }
 
       if (data.user) {
+        console.log('✅ User signed in successfully:', data.user.id);
+        console.log('👤 User metadata:', data.user.user_metadata);
+        
         // Check if user already has a family role first
-        const { data: existingRole } = await supabase
+        console.log('🔍 Checking for existing family role...');
+        const { data: existingRole, error: roleCheckError } = await supabase
           .from('user_roles')
-          .select('id')
+          .select('id, family_id, role')
           .eq('user_id', data.user.id)
           .maybeSingle();
 
+        console.log('🔍 Existing role check result:', { existingRole, roleCheckError });
+
         if (!existingRole) {
+          console.log('⚠️ No existing family role found. Checking metadata for setup...');
           // User doesn't have a family role yet, check metadata for setup
           const signupType = data.user.user_metadata?.signup_type;
           const familyName = data.user.user_metadata?.family_name;
           const joinCode = data.user.user_metadata?.join_code;
 
+          console.log('📝 Signup metadata:', { signupType, familyName, joinCode });
+
           if (signupType === 'admin' && familyName) {
+            console.log('👑 User is admin, creating family...');
             // Create family for admin user
             await createFamily(data.user.id);
           } else if (signupType === 'member' && joinCode) {
+            console.log('👥 User is member, joining family...');
             // Join family for member user
             await joinFamily(data.user.id);
+          } else {
+            console.log('⚠️ No family setup metadata found');
           }
+        } else {
+          console.log('✅ User already has family role:', existingRole);
         }
       }
 
       toast.success("Welcome back!");
       navigate("/");
     } catch (error: any) {
+      console.error('❌ Sign in process error:', error);
       toast.error(error.message || "An error occurred during sign in");
     } finally {
       setLoading(false);

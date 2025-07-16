@@ -23,29 +23,37 @@ export function useFamilyData() {
 
   useEffect(() => {
     async function loadFamilyData() {
+      console.log('📊 Loading family data...');
       if (!user) {
+        console.log('⚠️ No user found, skipping family data load');
         setLoading(false);
         return;
       }
+
+      console.log('📊 Loading family data for user:', user.id);
 
       try {
         setLoading(true);
         setError(null);
 
         // Load user profile
+        console.log('👤 Loading user profile...');
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, last_name')
           .eq('user_id', user.id)
           .maybeSingle();
 
+        console.log('👤 Profile result:', { profileData, profileError });
         if (profileError) {
-          console.error('Profile error:', profileError);
+          console.error('❌ Profile error:', profileError);
         } else {
           setProfile(profileData);
+          console.log('✅ Profile loaded:', profileData);
         }
 
         // Load user's family information
+        console.log('🏠 Loading family information...');
         const { data: userRole, error: roleError } = await supabase
           .from('user_roles')
           .select(`
@@ -60,22 +68,29 @@ export function useFamilyData() {
           .eq('user_id', user.id)
           .maybeSingle();
 
+        console.log('🏠 Family data result:', { userRole, roleError });
         if (roleError) {
-          console.error('Family data error:', roleError);
+          console.error('❌ Family data error:', roleError);
           setError(roleError.message);
         } else if (userRole && userRole.families) {
-          setFamilyInfo({
+          const familyInfo = {
             id: userRole.families.id,
             name: userRole.families.name,
             join_code: userRole.families.join_code,
             role: userRole.role
-          });
+          };
+          console.log('✅ Family info loaded:', familyInfo);
+          setFamilyInfo(familyInfo);
+        } else {
+          console.log('⚠️ No family data found for user');
+          setFamilyInfo(null);
         }
       } catch (err: any) {
-        console.error('Error loading family data:', err);
+        console.error('❌ Error loading family data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
+        console.log('📊 Family data loading completed');
       }
     }
 
