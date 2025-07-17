@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, User, Flag, X } from 'lucide-react'
 import {
   Dialog,
@@ -42,6 +42,28 @@ export function CreateTaskModal({
   const [assignee, setAssignee] = useState(editingTaskAssigneeId || 'unassigned')
   const [dueDate, setDueDate] = useState(editingTask?.dueDate || '')
   const [status, setStatus] = useState<TaskStatus>(editingTask?.status || initialStatus)
+
+  // Update form fields when editingTask changes
+  useEffect(() => {
+    if (editingTask) {
+      setTitle(editingTask.title || '')
+      setDescription(editingTask.description || '')
+      setTags(editingTask.tags || [])
+      setPriority(editingTask.priority || 'medium')
+      setAssignee(editingTaskAssigneeId || 'unassigned')
+      setDueDate(editingTask.dueDate || '')
+      setStatus(editingTask.status || 'todo')
+    } else {
+      // Reset to defaults when creating new task
+      setTitle('')
+      setDescription('')
+      setTags([])
+      setPriority('medium')
+      setAssignee('unassigned')
+      setDueDate('')
+      setStatus(initialStatus)
+    }
+  }, [editingTask, editingTaskAssigneeId, initialStatus])
 
   const handleSave = () => {
     if (!title.trim()) return
