@@ -55,18 +55,48 @@ export function useTasks() {
 
       if (fetchError) throw fetchError;
 
-      const formattedTasks: Task[] = (data || []).map(task => ({
-        id: task.id,
-        title: task.title,
-        description: task.description || '',
-        status: task.status as TaskStatus,
-        priority: task.priority as 'low' | 'medium' | 'high',
-        tags: task.tags || [],
-        assignee: task.assignee_id || '',
-        dueDate: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
-        createdAt: task.created_at,
-        updatedAt: task.updated_at
-      }));
+      // Get unique assignee IDs
+      const assigneeIds = [...new Set((data || [])
+        .map(task => task.assignee_id)
+        .filter(id => id))];
+
+      // Fetch profiles for assignees
+      let assigneeProfiles: any[] = [];
+      if (assigneeIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', assigneeIds);
+
+        if (!profilesError) {
+          assigneeProfiles = profiles || [];
+        }
+      }
+
+      const formattedTasks: Task[] = (data || []).map(task => {
+        let assigneeName = '';
+        if (task.assignee_id) {
+          const profile = assigneeProfiles.find(p => p.user_id === task.assignee_id);
+          if (profile) {
+            assigneeName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User';
+          } else {
+            assigneeName = 'Unknown User';
+          }
+        }
+
+        return {
+          id: task.id,
+          title: task.title,
+          description: task.description || '',
+          status: task.status as TaskStatus,
+          priority: task.priority as 'low' | 'medium' | 'high',
+          tags: task.tags || [],
+          assignee: assigneeName,
+          dueDate: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
+          createdAt: task.created_at,
+          updatedAt: task.updated_at
+        };
+      });
 
       setTasks(formattedTasks);
     } catch (err: any) {
