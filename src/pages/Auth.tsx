@@ -55,6 +55,7 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
+      // First, create the user account
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -63,9 +64,6 @@ const Auth = () => {
           data: {
             first_name: firstName,
             last_name: lastName,
-            signup_type: type,
-            family_name: type === 'admin' ? familyName : undefined,
-            join_code: type === 'member' ? joinCode : undefined,
           }
         }
       });
@@ -76,12 +74,36 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Don't create family here - do it after email verification and signin
+        // Create a draft profile for processing after email verification
+        const { error: draftError } = await supabase
+          .from('user_profile_drafts')
+          .insert({
+            user_id: data.user.id,
+            first_name: firstName,
+            last_name: lastName,
+            signup_type: type === 'admin' ? 'create_family' : 'join_family',
+            family_name: type === 'admin' ? familyName : null,
+            join_code: type === 'member' ? joinCode.toUpperCase() : null,
+          });
+
+        if (draftError) {
+          console.error('Error creating draft:', draftError);
+          toast.error("Failed to save signup information");
+          return;
+        }
+
         toast.success("Account created! Please check your email and click the verification link before signing in.", {
           duration: 8000
         });
         setShowEmailNote(true);
-        // Don't navigate immediately - user needs to verify email first
+        
+        // Clear form fields
+        setEmail("");
+        setPassword("");
+        setFirstName("");
+        setLastName("");
+        setFamilyName("");
+        setJoinCode("");
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred during signup");
@@ -90,106 +112,6 @@ const Auth = () => {
     }
   };
 
-  const createFamily = async (userId: string) => {
-    console.log('🏠 Starting family creation for user:', userId);
-    try {
-      // Get the family name from user metadata
-      const { data: { user } } = await supabase.auth.getUser();
-      const familyName = user?.user_metadata?.family_name;
-      
-      console.log('🏠 Family name from metadata:', familyName);
-      
-      if (!familyName) {
-        console.error('❌ Family name not found');
-        toast.error("Family name not found");
-        return;
-      }
-
-      console.log('🏠 Creating family with name:', familyName);
-      // Create family - the trigger will automatically generate a unique join code
-      const { data: family, error: familyError } = await supabase
-        .from('families')
-        .insert([{
-          name: familyName,
-          created_by: userId,
-          join_code: 'TEMP' // This will be replaced by the database trigger
-        }])
-        .select()
-        .single();
-
-      console.log('🏠 Family creation result:', { family, familyError });
-      if (familyError) {
-        console.error('❌ Family creation error:', familyError);
-        throw familyError;
-      }
-
-      console.log('🏠 Family created successfully:', family);
-      console.log('🏠 Generated join code:', family.join_code);
-
-      // Add user as family admin
-      console.log('👤 Adding user as family admin...');
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          family_id: family.id,
-          role: 'family_admin'
-        });
-
-      console.log('👤 Role creation result:', { roleError });
-      if (roleError) {
-        console.error('❌ Role creation error:', roleError);
-        throw roleError;
-      }
-
-      console.log('✅ Family setup completed successfully!');
-      toast.success(`Family "${familyName}" created! Your join code is: ${family.join_code}`);
-    } catch (error: any) {
-      console.error('❌ Error creating family:', error);
-      toast.error(error.message || "Failed to create family");
-    }
-  };
-
-  const joinFamily = async (userId: string) => {
-    try {
-      // Get the join code from user metadata
-      const { data: { user } } = await supabase.auth.getUser();
-      const joinCode = user?.user_metadata?.join_code;
-      
-      if (!joinCode) {
-        toast.error("Join code not found");
-        return;
-      }
-
-      // Find family by join code
-      const { data: family, error: familyError } = await supabase
-        .from('families')
-        .select('*')
-        .eq('join_code', joinCode.toUpperCase())
-        .single();
-
-      if (familyError) {
-        toast.error("Invalid join code");
-        return;
-      }
-
-      // Add user as family member
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          family_id: family.id,
-          role: 'family_member'
-        });
-
-      if (roleError) throw roleError;
-
-      toast.success(`Successfully joined "${family.name}" family!`);
-    } catch (error: any) {
-      console.error('Error joining family:', error);
-      toast.error(error.message || "Failed to join family");
-    }
-  };
 
   const handleSignIn = async () => {
     console.log('🔐 Starting sign in process...');
@@ -217,10 +139,9 @@ const Auth = () => {
       if (data.user) {
         console.log('✅ User signed in successfully:', data.user.id);
         // Family setup will be handled by AuthContext automatically
+        toast.success("Welcome back!");
+        navigate("/");
       }
-
-      toast.success("Welcome back!");
-      navigate("/");
     } catch (error: any) {
       console.error('❌ Sign in process error:', error);
       toast.error(error.message || "An error occurred during sign in");

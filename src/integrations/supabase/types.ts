@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profile_drafts: {
+        Row: {
+          created_at: string | null
+          family_name: string | null
+          first_name: string
+          id: string
+          join_code: string | null
+          last_name: string
+          signup_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          family_name?: string | null
+          first_name: string
+          id?: string
+          join_code?: string | null
+          last_name: string
+          signup_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          family_name?: string | null
+          first_name?: string
+          id?: string
+          join_code?: string | null
+          last_name?: string
+          signup_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

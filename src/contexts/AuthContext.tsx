@@ -32,22 +32,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🔍 Existing role check result:', { existingRole, roleCheckError });
 
       if (!existingRole) {
-        console.log('⚠️ No existing family role found. Checking metadata for setup...');
-        // User doesn't have a family role yet, check metadata for setup
-        const signupType = user.user_metadata?.signup_type;
-        const familyName = user.user_metadata?.family_name;
-        const joinCode = user.user_metadata?.join_code;
+        console.log('⚠️ No existing family role found. Checking for draft...');
+        
+        // Check if there's a draft profile to process
+        const { data: draft, error: draftError } = await supabase
+          .from('user_profile_drafts')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        console.log('📝 Signup metadata:', { signupType, familyName, joinCode });
+        console.log('📝 Draft check result:', { draft, draftError });
 
-        if (signupType === 'admin' && familyName) {
-          console.log('👑 User is admin, creating family...');
-          await createFamily(user.id, familyName);
-        } else if (signupType === 'member' && joinCode) {
-          console.log('👥 User is member, joining family...');
-          await joinFamily(user.id, joinCode);
+        if (draft) {
+          console.log('📦 Processing draft for family setup...');
+          // The draft will be processed by the database trigger
+          // But let's manually trigger the processing for immediate setup
+          if (draft.signup_type === 'create_family' && draft.family_name) {
+            console.log('👑 Creating family from draft...');
+            await createFamily(user.id, draft.family_name);
+          } else if (draft.signup_type === 'join_family' && draft.join_code) {
+            console.log('👥 Joining family from draft...');
+            await joinFamily(user.id, draft.join_code);
+          }
+          
+          // Clean up the draft after processing
+          await supabase
+            .from('user_profile_drafts')
+            .delete()
+            .eq('user_id', user.id);
         } else {
-          console.log('⚠️ No family setup metadata found');
+          console.log('⚠️ No draft found - user may need to complete setup');
         }
       } else {
         console.log('✅ User already has family role:', existingRole);
