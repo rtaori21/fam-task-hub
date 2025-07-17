@@ -11,17 +11,17 @@ import { NotificationCenter } from '@/components/NotificationCenter'
 import { Task, TaskStatus } from '@/types'
 import { CalendarEvent, TimeBlock, NotificationSettings } from '@/types/calendar'
 import { useTasks } from '@/hooks/useTasks'
+import { useCalendar } from '@/hooks/useCalendar'
 
 const Index = () => {
   const { tasks, createTask, updateTask, deleteTask, updateTaskStatus } = useTasks()
+  const { events, timeBlocks, createEvent, createTimeBlock } = useCalendar()
   const [currentView, setCurrentView] = useState('dashboard')
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false)
   const [eventModalInitialStart, setEventModalInitialStart] = useState<Date | undefined>()
   const [eventModalInitialEnd, setEventModalInitialEnd] = useState<Date | undefined>()
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
-  const [timeBlocks, setTimeBlocks] = useState<TimeBlock[]>([])
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     dailySummary: true,
     taskAssigned: true,
@@ -78,26 +78,26 @@ const Index = () => {
     setIsCreateEventOpen(true)
   }
 
-  const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
-    const newEvent: CalendarEvent = {
-      ...eventData,
-      id: Math.random().toString(36).substr(2, 9),
+  const handleSaveEvent = async (eventData: Omit<CalendarEvent, 'id'>) => {
+    try {
+      await createEvent(eventData)
+      setIsCreateEventOpen(false)
+      setEventModalInitialStart(undefined)
+      setEventModalInitialEnd(undefined)
+    } catch (error) {
+      console.error('Failed to create event:', error)
     }
-    setCalendarEvents(prev => [...prev, newEvent])
-    setIsCreateEventOpen(false)
-    setEventModalInitialStart(undefined)
-    setEventModalInitialEnd(undefined)
   }
 
-  const handleSaveTimeBlock = (timeBlockData: Omit<TimeBlock, 'id'>) => {
-    const newTimeBlock: TimeBlock = {
-      ...timeBlockData,
-      id: Math.random().toString(36).substr(2, 9),
+  const handleSaveTimeBlock = async (timeBlockData: Omit<TimeBlock, 'id'>) => {
+    try {
+      await createTimeBlock(timeBlockData)
+      setIsCreateEventOpen(false)
+      setEventModalInitialStart(undefined)
+      setEventModalInitialEnd(undefined)
+    } catch (error) {
+      console.error('Failed to create time block:', error)
     }
-    setTimeBlocks(prev => [...prev, newTimeBlock])
-    setIsCreateEventOpen(false)
-    setEventModalInitialStart(undefined)
-    setEventModalInitialEnd(undefined)
   }
 
   const handleEventSelect = (event: CalendarEvent) => {
@@ -124,7 +124,7 @@ const Index = () => {
         return (
           <CalendarView 
             tasks={tasks}
-            events={calendarEvents}
+            events={events}
             timeBlocks={timeBlocks}
             onEventSelect={handleEventSelect}
             onCreateEvent={handleCreateEvent}
