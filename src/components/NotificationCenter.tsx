@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Check, X, Settings, Clock } from 'lucide-react';
+import { Bell, Check, X, Settings, Clock, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -9,9 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export const NotificationCenter = () => {
   const [showSettings, setShowSettings] = useState(false);
+  const [isTriggering, setIsTriggering] = useState(false);
   const { 
     notifications, 
     loading: notificationsLoading, 
@@ -27,6 +30,32 @@ export const NotificationCenter = () => {
     saving, 
     updatePreferences 
   } = useNotificationPreferences();
+
+  // Manual trigger for testing event reminders
+  const triggerNotificationCheck = async () => {
+    setIsTriggering(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('trigger-notifications');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Notification Check Triggered",
+        description: "Checking for due tasks and upcoming events...",
+      });
+      
+      console.log('Manual notification trigger result:', data);
+    } catch (error: any) {
+      console.error('Error triggering notifications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to trigger notification check",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTriggering(false);
+    }
+  };
 
   if (notificationsLoading || preferencesLoading) {
     return (
@@ -80,6 +109,15 @@ export const NotificationCenter = () => {
                 <Check className="h-4 w-4" />
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={triggerNotificationCheck}
+              disabled={isTriggering}
+              title="Check for event reminders and due tasks"
+            >
+              <RefreshCw className={`h-4 w-4 ${isTriggering ? 'animate-spin' : ''}`} />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
