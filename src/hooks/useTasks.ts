@@ -60,6 +60,8 @@ export function useTasks() {
         .map(task => task.assignee_id)
         .filter(id => id))];
 
+      console.log('Assignee IDs found:', assigneeIds);
+
       // Fetch profiles for assignees
       let assigneeProfiles: any[] = [];
       if (assigneeIds.length > 0) {
@@ -67,6 +69,9 @@ export function useTasks() {
           .from('profiles')
           .select('user_id, first_name, last_name')
           .in('user_id', assigneeIds);
+
+        console.log('Profiles fetched:', profiles);
+        console.log('Profiles error:', profilesError);
 
         if (!profilesError) {
           assigneeProfiles = profiles || [];
@@ -77,6 +82,7 @@ export function useTasks() {
         let assigneeName = '';
         if (task.assignee_id) {
           const profile = assigneeProfiles.find(p => p.user_id === task.assignee_id);
+          console.log(`Looking for profile for ${task.assignee_id}:`, profile);
           if (profile) {
             assigneeName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User';
           } else {
