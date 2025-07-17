@@ -10,8 +10,10 @@ import { CreateEventModal } from '@/components/CreateEventModal'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { Task, TaskStatus } from '@/types'
 import { CalendarEvent, TimeBlock, NotificationSettings } from '@/types/calendar'
+import { useTasks } from '@/hooks/useTasks'
 
 const Index = () => {
+  const { tasks, createTask, updateTask, deleteTask, updateTaskStatus } = useTasks()
   const [currentView, setCurrentView] = useState('dashboard')
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -27,7 +29,6 @@ const Index = () => {
     taskOverdue: true,
     summaryTime: '08:00'
   })
-  const [tasks, setTasks] = useState<Task[]>([])
 
   const handleCreateTask = (status?: TaskStatus) => {
     setEditingTask(null)
@@ -39,43 +40,27 @@ const Index = () => {
     setIsCreateTaskOpen(true)
   }
 
-  const handleSaveTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSaveTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingTask) {
       // Update existing task
-      setTasks(prev => prev.map(task => 
-        task.id === editingTask.id 
-          ? { ...taskData, id: editingTask.id, createdAt: editingTask.createdAt, updatedAt: new Date().toISOString() }
-          : task
-      ))
+      await updateTask(editingTask.id, taskData)
     } else {
       // Create new task
-      const newTask: Task = {
-        ...taskData,
-        id: Math.random().toString(36).substr(2, 9),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      setTasks(prev => [...prev, newTask])
+      await createTask(taskData)
     }
     setEditingTask(null)
   }
 
-  const handleUpdateTask = (updatedTask: Task) => {
-    setTasks(prev => prev.map(task => 
-      task.id === updatedTask.id ? updatedTask : task
-    ))
+  const handleUpdateTask = async (updatedTask: Task) => {
+    await updateTask(updatedTask.id, updatedTask)
   }
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(task => task.id !== taskId))
+  const handleDeleteTask = async (taskId: string) => {
+    await deleteTask(taskId)
   }
 
-  const handleUpdateTaskStatus = (taskId: string, newStatus: TaskStatus) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
-        : task
-    ))
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskStatus) => {
+    await updateTaskStatus(taskId, newStatus)
   }
 
   // Calendar handlers
@@ -132,6 +117,7 @@ const Index = () => {
             onEditTask={handleEditTask}
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onDeleteTask={handleDeleteTask}
+            onTaskUpdate={handleUpdateTask}
           />
         )
       case 'calendar':

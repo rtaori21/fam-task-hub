@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Task, TaskStatus, TaskPriority } from '@/types'
+import { useFamilyMembers } from '@/hooks/useFamilyMembers'
 
 interface CreateTaskModalProps {
   isOpen: boolean
@@ -23,17 +24,14 @@ interface CreateTaskModalProps {
   editingTask?: Task
 }
 
-const familyMembers = [
-  'Alice', 'Bob', 'Charlie', 'Diana'
-] // In real app, this would come from workspace data
-
-export function CreateTaskModal({ 
+export function CreateTaskModal({
   isOpen, 
   onClose, 
   onSave, 
   initialStatus = 'todo',
   editingTask 
 }: CreateTaskModalProps) {
+  const { members } = useFamilyMembers()
   const [title, setTitle] = useState(editingTask?.title || '')
   const [description, setDescription] = useState(editingTask?.description || '')
   const [tags, setTags] = useState<string[]>(editingTask?.tags || [])
@@ -141,6 +139,7 @@ export function CreateTaskModal({
                   <SelectItem value="done">Done</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
           </div>
 
           {/* Tags Section */}
@@ -181,7 +180,6 @@ export function CreateTaskModal({
               </Button>
             </div>
           </div>
-        </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -192,11 +190,11 @@ export function CreateTaskModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {familyMembers.map(member => (
-                    <SelectItem key={member} value={member}>
+                  {members.map(member => (
+                    <SelectItem key={member.user_id} value={member.user_id}>
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        {member}
+                        {member.name}
                       </div>
                     </SelectItem>
                   ))}
