@@ -69,7 +69,28 @@ const Auth = () => {
       });
 
       if (error) {
+        // Check for specific errors related to repeated signups
+        if (error.message.includes("User already registered")) {
+          // For repeated signups, send a new verification email manually
+          const { error: resendError } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl,
+          });
+          
+          if (resendError) {
+            console.error("Error sending new verification email:", resendError);
+            toast.error("This email is already registered. Please check your inbox for the verification email or try signing in.");
+          } else {
+            toast.success("A new verification email has been sent to your email address. Please check your inbox and spam folders.", {
+              duration: 8000
+            });
+            setShowEmailNote(true);
+          }
+          setLoading(false);
+          return;
+        }
+        
         toast.error(error.message);
+        setLoading(false);
         return;
       }
 
@@ -89,6 +110,7 @@ const Auth = () => {
         if (draftError) {
           console.error('Error creating draft:', draftError);
           toast.error("Failed to save signup information");
+          setLoading(false);
           return;
         }
 
