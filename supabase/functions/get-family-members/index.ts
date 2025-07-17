@@ -57,39 +57,54 @@ serve(async (req) => {
       throw new Error('User not part of any family')
     }
 
-    // Get all family members
+    // Get all family members with explicit join
     const { data: familyMembers, error: membersError } = await supabaseAdmin
       .from('user_roles')
       .select(`
         user_id,
         role,
-        created_at,
-        profiles!inner(
-          first_name,
-          last_name
-        )
+        created_at
       `)
       .eq('family_id', userRole.family_id)
 
     if (membersError) {
+      console.error('Error fetching family members:', membersError)
       throw membersError
     }
 
-    // Get emails from auth.users for these users
+    // Get profiles separately to avoid join issues
     const userIds = familyMembers.map(member => member.user_id)
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id, first_name, last_name')
+      .in('user_id', userIds)
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError)
+      throw profilesError
+    }
+
+    // Get emails from auth.users for these users
     const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers()
 
     if (authError) {
+      console.error('Error fetching auth users:', authError)
       throw authError
     }
 
-    // Filter to only include users in this family and add email data
+    // Combine family members with profiles and email data
     const familyUsersWithEmail = familyMembers.map(member => {
+      const profile = profiles.find(p => p.user_id === member.user_id)
       const authUser = authUsers.users.find(u => u.id === member.user_id)
+      
+      const firstName = profile?.first_name || ''
+      const lastName = profile?.last_name || ''
+      const fullName = `${firstName} ${lastName}`.trim()
+      
       return {
         id: member.user_id,
         user_id: member.user_id,
-        name: `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim() || 'Unknown',
+        name: fullName || 'Unknown',
         email: authUser?.email || 'No email',
         role: member.role,
         joinedAt: member.created_at
