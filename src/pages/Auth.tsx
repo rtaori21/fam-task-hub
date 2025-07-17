@@ -154,7 +154,29 @@ const Auth = () => {
       console.log('🔐 Sign in result:', { user: data.user?.id, error });
       if (error) {
         console.error('❌ Sign in error:', error);
+        
+        // Handle specific error codes
+        if (error.message.includes("Email not confirmed")) {
+          toast.error("Your email has not been verified yet. Please check your inbox for the verification link.");
+          
+          // Show email verification notice and enable resend button
+          setShowEmailNote(true);
+          
+          // Try to automatically resend the verification email
+          const { error: resendError } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/`,
+          });
+          
+          if (!resendError) {
+            toast.success("We've sent a new verification email. Please check your inbox and spam folder.");
+          }
+          
+          setLoading(false);
+          return;
+        }
+        
         toast.error(error.message);
+        setLoading(false);
         return;
       }
 
@@ -220,8 +242,39 @@ const Auth = () => {
             <TabsContent value="signin" className="space-y-4">
               <div className="space-y-4">
                 {showEmailNote && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
-                    <strong>Note:</strong> Please check your email and click the verification link before signing in.
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800 space-y-3">
+                    <div>
+                      <strong>Note:</strong> Please check your email and click the verification link before signing in.
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Didn't receive the email?</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          if (!email) {
+                            toast.error("Please enter your email address first");
+                            return;
+                          }
+                          
+                          try {
+                            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                              redirectTo: `${window.location.origin}/`,
+                            });
+                            
+                            if (error) {
+                              toast.error("Failed to resend verification email: " + error.message);
+                            } else {
+                              toast.success("Verification email resent. Please check your inbox and spam folder.");
+                            }
+                          } catch (error: any) {
+                            toast.error(error.message || "Failed to resend verification email");
+                          }
+                        }}
+                      >
+                        Resend Email
+                      </Button>
+                    </div>
                   </div>
                 )}
                 <div className="space-y-2">
