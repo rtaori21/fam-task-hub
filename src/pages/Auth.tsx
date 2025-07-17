@@ -226,41 +226,7 @@ const Auth = () => {
 
       if (data.user) {
         console.log('✅ User signed in successfully:', data.user.id);
-        console.log('👤 User metadata:', data.user.user_metadata);
-        
-        // Check if user already has a family role first
-        console.log('🔍 Checking for existing family role...');
-        const { data: existingRole, error: roleCheckError } = await supabase
-          .from('user_roles')
-          .select('id, family_id, role')
-          .eq('user_id', data.user.id)
-          .maybeSingle();
-
-        console.log('🔍 Existing role check result:', { existingRole, roleCheckError });
-
-        if (!existingRole) {
-          console.log('⚠️ No existing family role found. Checking metadata for setup...');
-          // User doesn't have a family role yet, check metadata for setup
-          const signupType = data.user.user_metadata?.signup_type;
-          const familyName = data.user.user_metadata?.family_name;
-          const joinCode = data.user.user_metadata?.join_code;
-
-          console.log('📝 Signup metadata:', { signupType, familyName, joinCode });
-
-          if (signupType === 'admin' && familyName) {
-            console.log('👑 User is admin, creating family...');
-            // Create family for admin user
-            await createFamily(data.user.id);
-          } else if (signupType === 'member' && joinCode) {
-            console.log('👥 User is member, joining family...');
-            // Join family for member user
-            await joinFamily(data.user.id);
-          } else {
-            console.log('⚠️ No family setup metadata found');
-          }
-        } else {
-          console.log('✅ User already has family role:', existingRole);
-        }
+        // Family setup will be handled by AuthContext automatically
       }
 
       toast.success("Welcome back!");

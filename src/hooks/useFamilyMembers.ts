@@ -12,7 +12,7 @@ interface FamilyMemberData {
 }
 
 export function useFamilyMembers() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [members, setMembers] = useState<FamilyMemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,8 +20,8 @@ export function useFamilyMembers() {
   useEffect(() => {
     async function loadFamilyMembers() {
       console.log('👥 Loading family members...');
-      if (!user) {
-        console.log('⚠️ No user found, skipping family members load');
+      if (!user || !session) {
+        console.log('⚠️ No user/session found, skipping family members load');
         setLoading(false);
         return;
       }
@@ -32,78 +32,88 @@ export function useFamilyMembers() {
         setLoading(true);
         setError(null);
 
-        // First get the user's family
-        console.log('🔍 Getting user family role...');
-        const { data: userRole, error: roleError } = await supabase
-          .from('user_roles')
-          .select('family_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // Use the edge function to get family members with emails
+        console.log('📡 Calling edge function to get family members...');
+        const { data, error: functionError } = await supabase.functions.invoke('get-family-members', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
-        console.log('🔍 User role result:', { userRole, roleError });
-
-        if (roleError || !userRole) {
-          console.error('❌ Error getting user family:', roleError);
-          setMembers([]);
-          return;
+        console.log('📡 Edge function result:', { data, functionError });
+        
+        if (functionError) {
+          console.error('❌ Edge function error:', functionError);
+          throw functionError;
         }
 
-        console.log('✅ User family ID:', userRole.family_id);
-
-        // Get all family members with their profiles
-        console.log('👥 Getting all family members...');
-        const { data: familyMembers, error: membersError } = await supabase
-          .from('user_roles')
-          .select(`
-            id,
-            user_id,
-            role,
-            created_at
-          `)
-          .eq('family_id', userRole.family_id);
-
-        console.log('👥 Family members result:', { familyMembers, membersError });
-
-        if (membersError) {
-          console.error('❌ Error loading family members:', membersError);
-          setError(membersError.message);
-          return;
+        if (data?.error) {
+          console.error('❌ Function returned error:', data.error);
+          throw new Error(data.error);
         }
 
-        if (familyMembers) {
-          console.log('✅ Found', familyMembers.length, 'family members');
-          
+        const familyMembers = data?.members || [];
+        console.log('✅ Family members loaded:', familyMembers);
+        setMembers(familyMembers);
+      } catch (err: any) {
+        console.error('❌ Error loading family members:', err);
+        setError(err.message);
+        
+        // Fallback to the old method without emails if edge function fails
+        console.log('⚠️ Falling back to profiles-only method...');
+        try {
+          // First get the user's family
+          const { data: userRole, error: roleError } = await supabase
+            .from('user_roles')
+            .select('family_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (roleError || !userRole) {
+            console.log('⚠️ User not part of any family');
+            setMembers([]);
+            return;
+          }
+
+          // Get all family members with their profiles
+          const { data: familyMembers, error: membersError } = await supabase
+            .from('user_roles')
+            .select(`
+              id,
+              user_id,
+              role,
+              created_at
+            `)
+            .eq('family_id', userRole.family_id);
+
+          if (membersError) throw membersError;
+
           // Get profiles for all users
           const userIds = familyMembers.map(member => member.user_id);
-          console.log('👤 Getting profiles for user IDs:', userIds);
-          
           const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
             .select('user_id, first_name, last_name')
             .in('user_id', userIds);
 
-          console.log('👤 Profiles result:', { profiles, profilesError });
-
           const membersData: FamilyMemberData[] = familyMembers.map(member => {
             const profile = profiles?.find(p => p.user_id === member.user_id);
-            const memberData = {
+            return {
               id: member.id,
               user_id: member.user_id,
               name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Unknown',
-              email: '', // We don't have email in profiles, would need auth.users
+              email: 'Email not available',
               role: member.role,
               joinedAt: member.created_at
             };
-            console.log('👤 Processed member:', memberData);
-            return memberData;
           });
           
-          console.log('✅ Final members data:', membersData);
+          console.log('✅ Fallback family members loaded:', membersData);
           setMembers(membersData);
+          setError(null); // Clear the edge function error since fallback worked
+        } catch (fallbackErr: any) {
+          console.error('❌ Fallback method also failed:', fallbackErr);
+          setError(fallbackErr.message);
         }
-      } catch (err: any) {
-        console.error('❌ Error loading family members:', err);
-        setError(err.message);
       } finally {
         setLoading(false);
         console.log('👥 Family members loading completed');
@@ -111,7 +121,7 @@ export function useFamilyMembers() {
     }
 
     loadFamilyMembers();
-  }, [user]);
+  }, [user, session]);
 
   return { members, loading, error };
 }

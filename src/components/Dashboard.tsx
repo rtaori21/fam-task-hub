@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, BarChart3, Clock, CheckCircle2, Users } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Task } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface DashboardProps {
   tasks: Task[]
@@ -11,6 +12,12 @@ interface DashboardProps {
 }
 
 export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
+  const { ensureFamilySetup } = useAuth();
+
+  useEffect(() => {
+    // Ensure family setup when dashboard loads
+    ensureFamilySetup();
+  }, [ensureFamilySetup]);
   const todayTasks = tasks.filter(task => {
     if (!task.dueDate) return false
     const today = new Date().toDateString()
