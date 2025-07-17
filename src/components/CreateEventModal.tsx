@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CalendarEvent, TimeBlock } from '@/types/calendar'
+import { useFamilyMembers } from '@/hooks/useFamilyMembers'
 
 interface CreateEventModalProps {
   isOpen: boolean
@@ -25,8 +26,6 @@ interface CreateEventModalProps {
   initialEnd?: Date
 }
 
-const familyMembers = ['Alice', 'Bob', 'Charlie', 'Diana', 'Me'] // Added 'Me' option
-
 export function CreateEventModal({ 
   isOpen, 
   onClose, 
@@ -35,6 +34,7 @@ export function CreateEventModal({
   initialStart,
   initialEnd 
 }: CreateEventModalProps) {
+  const { members } = useFamilyMembers()
   const [eventType, setEventType] = useState<'event' | 'blocked'>('event')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -112,7 +112,7 @@ export function CreateEventModal({
   }
 
   const selectAllMembers = () => {
-    setAssignees(familyMembers)
+    setAssignees(members.map(member => member.name))
   }
 
   const clearAllAssignees = () => {
@@ -263,19 +263,19 @@ export function CreateEventModal({
 
               {/* Member checkboxes */}
               <div className="grid grid-cols-2 gap-3">
-                {familyMembers.map(member => (
-                  <div key={member} className="flex items-center space-x-2">
+                {members.map(member => (
+                  <div key={member.user_id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={member}
-                      checked={assignees.includes(member)}
-                      onCheckedChange={() => toggleAssignee(member)}
+                      id={member.user_id}
+                      checked={assignees.includes(member.name)}
+                      onCheckedChange={() => toggleAssignee(member.name)}
                     />
                     <Label 
-                      htmlFor={member}
+                      htmlFor={member.user_id}
                       className="flex items-center gap-2 cursor-pointer"
                     >
                       <Users className="h-4 w-4" />
-                      {member}
+                      {member.name}
                     </Label>
                   </div>
                 ))}
