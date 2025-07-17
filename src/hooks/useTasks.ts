@@ -47,6 +47,8 @@ export function useTasks() {
       setLoading(true);
       setError(null);
 
+      console.log('Loading tasks for family:', familyInfo.id);
+
       const { data, error: fetchError } = await supabase
         .from('tasks')
         .select('*')
@@ -55,14 +57,16 @@ export function useTasks() {
 
       if (fetchError) throw fetchError;
 
-      // Get unique assignee IDs
+      console.log('Raw tasks data:', data);
+
+      // Get unique assignee IDs and filter out null/undefined values
       const assigneeIds = [...new Set((data || [])
         .map(task => task.assignee_id)
-        .filter(id => id))];
+        .filter(id => id && typeof id === 'string' && id.trim() !== ''))];
 
       console.log('Assignee IDs found:', assigneeIds);
 
-      // Fetch profiles for assignees
+      // Fetch profiles for assignees with better error handling
       let assigneeProfiles: any[] = [];
       if (assigneeIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
@@ -70,23 +74,40 @@ export function useTasks() {
           .select('user_id, first_name, last_name')
           .in('user_id', assigneeIds);
 
-        console.log('Profiles fetched:', profiles);
-        console.log('Profiles error:', profilesError);
+        console.log('Profiles query result - data:', profiles, 'error:', profilesError);
 
-        if (!profilesError) {
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          // Continue with empty profiles array instead of failing completely
+        } else {
           assigneeProfiles = profiles || [];
         }
       }
 
+      console.log('Final assignee profiles:', assigneeProfiles);
+
       const formattedTasks: Task[] = (data || []).map(task => {
         let assigneeName = '';
         if (task.assignee_id) {
-          const profile = assigneeProfiles.find(p => p.user_id === task.assignee_id);
-          console.log(`Looking for profile for ${task.assignee_id}:`, profile);
-          if (profile) {
-            assigneeName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User';
+          // More robust profile lookup
+          const profile = assigneeProfiles.find(p => 
+            p && p.user_id && p.user_id === task.assignee_id
+          );
+          
+          console.log(`Task "${task.title}" - Looking for assignee ${task.assignee_id}:`, profile);
+          
+          if (profile && (profile.first_name || profile.last_name)) {
+            const firstName = profile.first_name || '';
+            const lastName = profile.last_name || '';
+            assigneeName = `${firstName} ${lastName}`.trim();
+            
+            // If both names are empty, show Unknown User
+            if (!assigneeName) {
+              assigneeName = 'Unknown User';
+            }
           } else {
             assigneeName = 'Unknown User';
+            console.warn(`No profile found for assignee_id: ${task.assignee_id}`);
           }
         }
 
@@ -104,6 +125,7 @@ export function useTasks() {
         };
       });
 
+      console.log('Final formatted tasks:', formattedTasks);
       setTasks(formattedTasks);
     } catch (err: any) {
       console.error('Error loading tasks:', err);
@@ -114,34 +136,56 @@ export function useTasks() {
   };
 
   const createTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!user || !familyInfo?.id) return;
+    if (!user || !familyInfo?.id) {
+      throw new Error('User must be logged in and part of a family to create tasks');
+    }
 
+    setError(null);
     try {
-      const { error: insertError } = await supabase
-        .from('tasks')
-        .insert({
-          title: taskData.title,
-          description: taskData.description,
-          status: taskData.status,
-          priority: taskData.priority,
-          tags: taskData.tags,
-          assignee_id: taskData.assignee || null,
-          family_id: familyInfo.id,
-          created_by: user.id,
-          due_date: taskData.dueDate ? new Date(taskData.dueDate).toISOString() : null
-        });
+      // The assignee field in taskData should contain the user_id from profiles table
+      // Validate that if assignee is provided, it's a valid UUID
+      let assigneeId = null;
+      if (taskData.assignee && taskData.assignee.trim() !== '') {
+        assigneeId = taskData.assignee.trim();
+        console.log('Creating task with assignee_id:', assigneeId);
+      }
 
-      if (insertError) throw insertError;
+      const taskToInsert = {
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        priority: taskData.priority,
+        tags: taskData.tags,
+        assignee_id: assigneeId,
+        family_id: familyInfo.id,
+        created_by: user.id,
+        due_date: taskData.dueDate ? new Date(taskData.dueDate).toISOString() : null
+      };
+
+      console.log('Creating task with data:', taskToInsert);
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([taskToInsert])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('Task created successfully:', data);
       
       // Tasks will be updated via real-time subscription
     } catch (err: any) {
-      console.error('Error creating task:', err);
-      setError(err.message);
+      const errorMessage = err.message || 'Failed to create task';
+      console.error('Create task error:', err);
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     try {
+      setError(null);
       const updateData: any = {};
       
       if (updates.title !== undefined) updateData.title = updates.title;
@@ -149,8 +193,20 @@ export function useTasks() {
       if (updates.status !== undefined) updateData.status = updates.status;
       if (updates.priority !== undefined) updateData.priority = updates.priority;
       if (updates.tags !== undefined) updateData.tags = updates.tags;
-      if (updates.assignee !== undefined) updateData.assignee_id = updates.assignee || null;
       if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate ? new Date(updates.dueDate).toISOString() : null;
+      
+      // Handle assignee updates properly
+      if (updates.assignee !== undefined) {
+        if (updates.assignee && updates.assignee.trim() !== '') {
+          updateData.assignee_id = updates.assignee.trim();
+          console.log('Updating task assignee to:', updateData.assignee_id);
+        } else {
+          updateData.assignee_id = null;
+          console.log('Removing task assignee');
+        }
+      }
+
+      console.log('Updating task with data:', updateData);
 
       const { error: updateError } = await supabase
         .from('tasks')
@@ -159,10 +215,13 @@ export function useTasks() {
 
       if (updateError) throw updateError;
 
+      console.log('Task updated successfully');
       // Tasks will be updated via real-time subscription
     } catch (err: any) {
+      const errorMessage = err.message || 'Failed to update task';
       console.error('Error updating task:', err);
-      setError(err.message);
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
