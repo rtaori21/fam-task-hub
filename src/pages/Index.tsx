@@ -168,6 +168,7 @@ const Index = () => {
         }}
         onSave={handleSaveTask}
         editingTask={editingTask || undefined}
+        editingTaskAssigneeId={editingTask?.assigneeId || undefined}
       />
 
       <CreateEventModal

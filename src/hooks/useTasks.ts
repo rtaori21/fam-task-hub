@@ -119,6 +119,7 @@ export function useTasks() {
           priority: task.priority as 'low' | 'medium' | 'high',
           tags: task.tags || [],
           assignee: assigneeName,
+          assigneeId: task.assignee_id, // Store the actual user_id separately
           dueDate: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
           createdAt: task.created_at,
           updatedAt: task.updated_at

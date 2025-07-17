@@ -9,6 +9,7 @@ export interface Task {
   priority: TaskPriority
   tags?: string[]
   assignee?: string
+  assigneeId?: string // Store the actual user_id for editing
   dueDate?: string
   attachments?: { name: string; url: string; type: string }[]
   createdAt: string

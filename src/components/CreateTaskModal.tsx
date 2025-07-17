@@ -22,6 +22,7 @@ interface CreateTaskModalProps {
   onSave: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void
   initialStatus?: TaskStatus
   editingTask?: Task
+  editingTaskAssigneeId?: string // Add the actual user_id for editing
 }
 
 export function CreateTaskModal({
@@ -29,7 +30,8 @@ export function CreateTaskModal({
   onClose, 
   onSave, 
   initialStatus = 'todo',
-  editingTask 
+  editingTask,
+  editingTaskAssigneeId
 }: CreateTaskModalProps) {
   const { members } = useFamilyMembers()
   const [title, setTitle] = useState(editingTask?.title || '')
@@ -37,7 +39,7 @@ export function CreateTaskModal({
   const [tags, setTags] = useState<string[]>(editingTask?.tags || [])
   const [newTag, setNewTag] = useState('')
   const [priority, setPriority] = useState<TaskPriority>(editingTask?.priority || 'medium')
-  const [assignee, setAssignee] = useState(editingTask?.assignee || 'unassigned')
+  const [assignee, setAssignee] = useState(editingTaskAssigneeId || 'unassigned')
   const [dueDate, setDueDate] = useState(editingTask?.dueDate || '')
   const [status, setStatus] = useState<TaskStatus>(editingTask?.status || initialStatus)
 
@@ -61,6 +63,7 @@ export function CreateTaskModal({
     setAssignee('unassigned')
     setDueDate('')
     setStatus(initialStatus)
+    setTags([])
     
     onClose()
   }
