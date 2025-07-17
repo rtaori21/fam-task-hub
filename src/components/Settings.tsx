@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTheme } from "next-themes"
-import { Settings as SettingsIcon, User, Bell, Palette, Save, Moon, Sun } from 'lucide-react'
+import { Settings as SettingsIcon, User, Bell, Palette, Save, Moon, Sun, Upload } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,9 +35,11 @@ export function Settings({}: SettingsProps) {
   const [userProfile, setUserProfile] = useState({
     name: '',
     email: '',
-    role: 'Parent',
     avatar: ''
   })
+  
+  // File input ref for photo upload
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Load user data when profile is available
   useEffect(() => {
@@ -45,11 +47,54 @@ export function Settings({}: SettingsProps) {
       setUserProfile({
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
         email: user.email || '',
-        role: familyInfo?.role === 'family_admin' ? 'Admin' : 'Member',
-        avatar: ''
+        avatar: localStorage.getItem('userAvatar') || ''
       });
     }
-  }, [profile, user, familyInfo]);
+  }, [profile, user]);
+
+  // Handle photo upload
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const avatarUrl = e.target?.result as string;
+        // Save to localStorage
+        localStorage.setItem('userAvatar', avatarUrl);
+        // Update state
+        updateUserProfile({ avatar: avatarUrl });
+        toast({
+          title: "Photo uploaded",
+          description: "Your profile picture has been updated",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
 
   // Notification Settings
   const [notifications, setNotifications] = useState({
@@ -206,36 +251,40 @@ export function Settings({}: SettingsProps) {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="role">Role in Family</Label>
-                <Select value={userProfile.role} onValueChange={(value) => updateUserProfile({ role: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Parent">Parent</SelectItem>
-                    <SelectItem value="Guardian">Guardian</SelectItem>
-                    <SelectItem value="Teen">Teen</SelectItem>
-                    <SelectItem value="Child">Child</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <Separator />
               
               <div className="space-y-4">
                 <h4 className="font-medium">Profile Picture</h4>
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User className="h-8 w-8 text-primary" />
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                    {userProfile.avatar ? (
+                      <img 
+                        src={userProfile.avatar} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-8 w-8 text-primary" />
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Button variant="outline" size="sm">
-                      Upload Photo
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleUploadClick}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {userProfile.avatar ? 'Change Photo' : 'Upload Photo'}
                     </Button>
                     <p className="text-sm text-muted-foreground">
-                      Recommended: Square image, at least 128x128px
+                      Recommended: Square image, at least 128x128px, max 5MB
                     </p>
                   </div>
                 </div>
