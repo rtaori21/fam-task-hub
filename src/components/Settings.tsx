@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFamilyData } from '@/hooks/useFamilyData'
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences'
+import { supabase } from '@/integrations/supabase/client'
 
 interface SettingsProps {}
 
@@ -21,6 +23,12 @@ export function Settings({}: SettingsProps) {
   const { theme, setTheme } = useTheme()
   const { user } = useAuth()
   const { profile, familyInfo } = useFamilyData()
+  const { 
+    preferences: notificationPreferences, 
+    loading: notificationLoading, 
+    saving: notificationSaving, 
+    updatePreferences: updateNotificationPreferences 
+  } = useNotificationPreferences()
   const [isDirty, setIsDirty] = useState(false)
 
   // User Profile Settings
@@ -71,13 +79,35 @@ export function Settings({}: SettingsProps) {
     }
   }, [theme, preferences.theme])
 
-  const handleSave = () => {
-    // In a real app, this would save to backend/localStorage
-    toast({
-      title: "Settings Saved",
-      description: "Your preferences have been updated successfully.",
-    })
-    setIsDirty(false)
+  const handleSave = async () => {
+    try {
+      if (user) {
+        const [firstName, ...lastNameParts] = userProfile.name.split(' ')
+        const lastName = lastNameParts.join(' ')
+        
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            first_name: firstName || '',
+            last_name: lastName || '',
+          })
+          .eq('user_id', user.id)
+
+        if (error) throw error
+
+        toast({
+          title: "Settings Saved",
+          description: "Your preferences have been updated successfully.",
+        })
+        setIsDirty(false)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save settings",
+        variant: "destructive",
+      })
+    }
   }
 
 
@@ -217,96 +247,149 @@ export function Settings({}: SettingsProps) {
               <CardTitle>Notification Preferences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="font-medium">Task Notifications</h4>
-                <div className="space-y-4">
-                  {[
-                    { key: 'taskAssigned' as const, label: 'When a task is assigned to me', description: 'Get notified when someone assigns you a task' },
-                    { key: 'taskDueSoon' as const, label: 'When tasks are due soon', description: 'Reminders for upcoming deadlines' },
-                    { key: 'taskOverdue' as const, label: 'When tasks are overdue', description: 'Alerts for missed deadlines' }
-                  ].map(({ key, label, description }) => (
-                    <div key={key} className="flex items-center justify-between space-x-2">
+              {notificationLoading ? (
+                <div className="text-center py-4">Loading notification preferences...</div>
+              ) : notificationPreferences ? (
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Task Notifications</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="task-assignments">When a task is assigned to me</Label>
+                          <p className="text-sm text-muted-foreground">Get notified when someone assigns you a task</p>
+                        </div>
+                        <Switch
+                          id="task-assignments"
+                          checked={notificationPreferences.task_assignments}
+                          onCheckedChange={(checked) =>
+                            updateNotificationPreferences({ task_assignments: checked })
+                          }
+                          disabled={notificationSaving}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="task-due-soon">When tasks are due soon</Label>
+                          <p className="text-sm text-muted-foreground">Reminders for upcoming deadlines</p>
+                        </div>
+                        <Switch
+                          id="task-due-soon"
+                          checked={notificationPreferences.task_due_reminders}
+                          onCheckedChange={(checked) =>
+                            updateNotificationPreferences({ task_due_reminders: checked })
+                          }
+                          disabled={notificationSaving}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Calendar Notifications</h4>
+                    <div className="flex items-center justify-between space-x-2">
                       <div className="space-y-0.5">
-                        <Label htmlFor={key}>{label}</Label>
-                        <p className="text-sm text-muted-foreground">{description}</p>
+                        <Label htmlFor="event-reminders">Event reminders</Label>
+                        <p className="text-sm text-muted-foreground">Get reminded before calendar events</p>
                       </div>
                       <Switch
-                        id={key}
-                        checked={notifications[key]}
-                        onCheckedChange={(checked) => updateNotifications({ [key]: checked })}
+                        id="event-reminders"
+                        checked={notificationPreferences.event_reminders}
+                        onCheckedChange={(checked) =>
+                          updateNotificationPreferences({ event_reminders: checked })
+                        }
+                        disabled={notificationSaving}
                       />
                     </div>
-                  ))}
+                    
+                    {notificationPreferences.event_reminders && (
+                      <div className="space-y-2 ml-4">
+                        <Label>Reminder timing</Label>
+                        <Select 
+                          value={notificationPreferences.reminder_advance_minutes.toString()} 
+                          onValueChange={(value) => updateNotificationPreferences({ reminder_advance_minutes: parseInt(value) })}
+                          disabled={notificationSaving}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5 minutes before</SelectItem>
+                            <SelectItem value="15">15 minutes before</SelectItem>
+                            <SelectItem value="30">30 minutes before</SelectItem>
+                            <SelectItem value="60">1 hour before</SelectItem>
+                            <SelectItem value="120">2 hours before</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Daily Summary</h4>
+                    <div className="flex items-center justify-between space-x-2">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="daily-summary">Send daily summary</Label>
+                        <p className="text-sm text-muted-foreground">Daily overview of tasks and events</p>
+                      </div>
+                      <Switch
+                        id="daily-summary"
+                        checked={notificationPreferences.daily_summary}
+                        onCheckedChange={(checked) =>
+                          updateNotificationPreferences({ daily_summary: checked })
+                        }
+                        disabled={notificationSaving}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Advanced Options</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="email-notifications">Email notifications</Label>
+                          <p className="text-sm text-muted-foreground">Receive notifications via email (coming soon)</p>
+                        </div>
+                        <Switch
+                          id="email-notifications"
+                          checked={notificationPreferences.email_notifications}
+                          onCheckedChange={(checked) =>
+                            updateNotificationPreferences({ email_notifications: checked })
+                          }
+                          disabled={true} // Disabled for now
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="browser-notifications">Browser notifications</Label>
+                          <p className="text-sm text-muted-foreground">Receive browser push notifications (coming soon)</p>
+                        </div>
+                        <Switch
+                          id="browser-notifications"
+                          checked={notificationPreferences.browser_notifications}
+                          onCheckedChange={(checked) =>
+                            updateNotificationPreferences({ browser_notifications: checked })
+                          }
+                          disabled={true} // Disabled for now
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Calendar Notifications</h4>
-                <div className="flex items-center justify-between space-x-2">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="calendarReminders">Event reminders</Label>
-                    <p className="text-sm text-muted-foreground">Get reminded before calendar events</p>
-                  </div>
-                  <Switch
-                    id="calendarReminders"
-                    checked={notifications.calendarReminders}
-                    onCheckedChange={(checked) => updateNotifications({ calendarReminders: checked })}
-                  />
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  Failed to load notification preferences
                 </div>
-                
-                {notifications.calendarReminders && (
-                  <div className="space-y-2 ml-4">
-                    <Label>Reminder timing</Label>
-                    <Select 
-                      value={notifications.reminderMinutes.toString()} 
-                      onValueChange={(value) => updateNotifications({ reminderMinutes: parseInt(value) })}
-                    >
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5 minutes before</SelectItem>
-                        <SelectItem value="15">15 minutes before</SelectItem>
-                        <SelectItem value="30">30 minutes before</SelectItem>
-                        <SelectItem value="60">1 hour before</SelectItem>
-                        <SelectItem value="1440">1 day before</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Daily Summary</h4>
-                <div className="flex items-center justify-between space-x-2">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="dailySummary">Send daily summary</Label>
-                    <p className="text-sm text-muted-foreground">Daily overview of tasks and events</p>
-                  </div>
-                  <Switch
-                    id="dailySummary"
-                    checked={notifications.dailySummary}
-                    onCheckedChange={(checked) => updateNotifications({ dailySummary: checked })}
-                  />
-                </div>
-                
-                {notifications.dailySummary && (
-                  <div className="space-y-2 ml-4">
-                    <Label htmlFor="summaryTime">Summary time</Label>
-                    <Input
-                      id="summaryTime"
-                      type="time"
-                      value={notifications.summaryTime}
-                      onChange={(e) => updateNotifications({ summaryTime: e.target.value })}
-                      className="w-32"
-                    />
-                  </div>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
