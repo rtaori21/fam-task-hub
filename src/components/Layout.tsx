@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFamilyData } from '@/hooks/useFamilyData'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -26,11 +27,13 @@ const navigation = [
 export function Layout({ children, currentView, onViewChange, onCreateTask }: LayoutProps) {
   const { signOut, user } = useAuth();
   const { familyInfo, profile, loading } = useFamilyData();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
       await signOut();
       toast.success("Signed out successfully");
+      navigate("/auth"); // Redirect to auth page after sign out
     } catch (error: any) {
       toast.error(error.message || "Failed to sign out");
     }

@@ -23,16 +23,7 @@ const Auth = () => {
   const [showEmailNote, setShowEmailNote] = useState(false);
   const navigate = useNavigate();
 
-  // TEMPORARY: Bypass authentication for testing
-  const handleBypassAuth = () => {
-    console.log("🚀 Bypassing authentication for testing");
-    navigate("/");
-  };
-
   useEffect(() => {
-    // TEMPORARY: Disable automatic user check for testing
-    // TODO: Re-enable this when authentication is restored
-    /*
     // Check if user is already logged in
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -41,7 +32,6 @@ const Auth = () => {
       }
     };
     checkUser();
-    */
   }, [navigate]);
 
   const handleSignUp = async (type: 'admin' | 'member') => {
@@ -274,16 +264,6 @@ const Auth = () => {
           <CardDescription>
             Sign in to your account or create a new family
           </CardDescription>
-          {/* TEMPORARY: Testing bypass button */}
-          <div className="mt-4">
-            <Button 
-              onClick={handleBypassAuth} 
-              variant="outline"
-              className="text-xs"
-            >
-              🚀 Skip Authentication (Testing Only)
-            </Button>
-          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">

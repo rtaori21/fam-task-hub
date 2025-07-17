@@ -8,10 +8,6 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  // TEMPORARY: Authentication disabled for testing
-  // TODO: Re-enable authentication by uncommenting the code below
-  
-  /*
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +28,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!user) {
     return null;
   }
-  */
 
   return <>{children}</>;
 }
