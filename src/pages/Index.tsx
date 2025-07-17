@@ -134,11 +134,7 @@ const Index = () => {
       case 'notifications':
         return (
           <div className="max-w-md mx-auto">
-            <NotificationCenter 
-              tasks={tasks}
-              settings={notificationSettings}
-              onSettingsChange={setNotificationSettings}
-            />
+            <NotificationCenter />
           </div>
         )
       case 'members':

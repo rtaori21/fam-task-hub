@@ -94,6 +94,93 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          browser_notifications: boolean
+          created_at: string
+          daily_summary: boolean
+          email_notifications: boolean
+          event_reminders: boolean
+          family_id: string
+          id: string
+          reminder_advance_minutes: number
+          task_assignments: boolean
+          task_due_reminders: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          browser_notifications?: boolean
+          created_at?: string
+          daily_summary?: boolean
+          email_notifications?: boolean
+          event_reminders?: boolean
+          family_id: string
+          id?: string
+          reminder_advance_minutes?: number
+          task_assignments?: boolean
+          task_due_reminders?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          browser_notifications?: boolean
+          created_at?: string
+          daily_summary?: boolean
+          email_notifications?: boolean
+          event_reminders?: boolean
+          family_id?: string
+          id?: string
+          reminder_advance_minutes?: number
+          task_assignments?: boolean
+          task_due_reminders?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          dismissed_at: string | null
+          family_id: string
+          id: string
+          message: string
+          read_at: string | null
+          status: Database["public"]["Enums"]["notification_status"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          dismissed_at?: string | null
+          family_id: string
+          id?: string
+          message: string
+          read_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          dismissed_at?: string | null
+          family_id?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -294,6 +381,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_notification: {
+        Args: {
+          p_family_id: string
+          p_user_id: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+          p_title: string
+          p_message: string
+          p_data?: Json
+        }
+        Returns: string
+      }
       generate_join_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -305,6 +403,18 @@ export type Database = {
       get_user_family_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_notification_preferences: {
+        Args: { p_user_id: string }
+        Returns: {
+          task_assignments: boolean
+          task_due_reminders: boolean
+          event_reminders: boolean
+          daily_summary: boolean
+          email_notifications: boolean
+          browser_notifications: boolean
+          reminder_advance_minutes: number
+        }[]
       }
       has_role: {
         Args: {
@@ -321,6 +431,13 @@ export type Database = {
     }
     Enums: {
       app_role: "family_admin" | "family_member"
+      notification_status: "unread" | "read" | "dismissed"
+      notification_type:
+        | "task_assigned"
+        | "task_due_soon"
+        | "task_overdue"
+        | "event_reminder"
+        | "family_invite"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -449,6 +566,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["family_admin", "family_member"],
+      notification_status: ["unread", "read", "dismissed"],
+      notification_type: [
+        "task_assigned",
+        "task_due_soon",
+        "task_overdue",
+        "event_reminder",
+        "family_invite",
+      ],
     },
   },
 } as const
