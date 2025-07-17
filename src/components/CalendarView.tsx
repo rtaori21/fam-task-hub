@@ -37,12 +37,17 @@ export function CalendarView({
     return tasks
       .filter(task => task.dueDate)
       .map(task => {
-        const dueDate = new Date(task.dueDate!)
+        // Parse the date string as a local date, not UTC
+        const dateStr = task.dueDate!
+        let dueDate: Date
         
-        // If the due date doesn't have a specific time (i.e., it's set to midnight), 
-        // set it to 5 PM (17:00) as the default time
-        if (dueDate.getHours() === 0 && dueDate.getMinutes() === 0 && dueDate.getSeconds() === 0) {
-          dueDate.setHours(17, 0, 0, 0) // Set to 5:00 PM
+        // If it's a date-only string (YYYY-MM-DD), parse it as local time at 5 PM
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = dateStr.split('-').map(Number)
+          dueDate = new Date(year, month - 1, day, 17, 0, 0, 0) // Set to 5:00 PM local time
+        } else {
+          // If it includes time, use it as is
+          dueDate = new Date(dateStr)
         }
         
         return {
