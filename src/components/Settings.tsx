@@ -196,9 +196,13 @@ export function Settings({}: SettingsProps) {
                     id="email"
                     type="email"
                     value={userProfile.email}
-                    onChange={(e) => updateUserProfile({ email: e.target.value })}
-                    placeholder="Enter your email"
+                    disabled={true}
+                    className="bg-muted text-muted-foreground cursor-not-allowed"
+                    placeholder="Email address (read-only)"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Email cannot be changed from here. Contact support if needed.
+                  </p>
                 </div>
               </div>
               

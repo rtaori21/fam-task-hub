@@ -148,7 +148,7 @@ export function FamilyMembers() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -158,41 +158,6 @@ export function FamilyMembers() {
               </div>
               <div className="p-3 rounded-full bg-primary/10">
                 <User className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Active Tasks</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {members.reduce((sum, member) => sum + member.tasksAssigned, 0)}
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-status-todo/10">
-                <Settings className="h-5 w-5 text-status-todo" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Completion Rate</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {Math.round(
-                    (members.reduce((sum, member) => sum + member.tasksCompleted, 0) /
-                     Math.max(members.reduce((sum, member) => sum + member.tasksAssigned, 0), 1)) * 100
-                  )}%
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-status-done/10">
-                <Settings className="h-5 w-5 text-status-done" />
               </div>
             </div>
           </CardContent>

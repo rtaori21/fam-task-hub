@@ -38,6 +38,13 @@ export function CalendarView({
       .filter(task => task.dueDate)
       .map(task => {
         const dueDate = new Date(task.dueDate!)
+        
+        // If the due date doesn't have a specific time (i.e., it's set to midnight), 
+        // set it to 5 PM (17:00) as the default time
+        if (dueDate.getHours() === 0 && dueDate.getMinutes() === 0 && dueDate.getSeconds() === 0) {
+          dueDate.setHours(17, 0, 0, 0) // Set to 5:00 PM
+        }
+        
         return {
           id: `task-${task.id}`,
           title: `📋 ${task.title}`,
