@@ -91,7 +91,24 @@ const handler = async (req: Request): Promise<Response> => {
         // Filter users based on event assignees if specified
         let targetUsers = familyUsers;
         if (event.assignees && event.assignees.length > 0) {
-          targetUsers = familyUsers.filter(u => event.assignees.includes(u.user_id));
+          // Get family members to match names to user IDs
+          const { data: familyMembers } = await supabase
+            .from("profiles")
+            .select("user_id, first_name, last_name")
+            .in("user_id", familyUsers.map(u => u.user_id));
+          
+          // Match assignee names to user IDs
+          const assigneeUserIds = [];
+          for (const assigneeName of event.assignees) {
+            const member = familyMembers?.find(m => 
+              `${m.first_name} ${m.last_name}`.trim() === assigneeName.trim()
+            );
+            if (member) {
+              assigneeUserIds.push(member.user_id);
+            }
+          }
+          
+          targetUsers = familyUsers.filter(u => assigneeUserIds.includes(u.user_id));
         }
 
         console.log(`Processing event "${event.title}" (${event.id}) for ${targetUsers.length} users`);
