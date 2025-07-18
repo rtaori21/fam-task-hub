@@ -54,22 +54,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Process each reminder advance time group
     for (const [advanceMinutes, users] of reminderGroups) {
-      const reminderTime = new Date(now.getTime() + advanceMinutes * 60000);
-      const windowStart = new Date(reminderTime.getTime() - 2 * 60000); // 2 minutes before
-      const windowEnd = new Date(reminderTime.getTime() + 2 * 60000); // 2 minutes after
+      // Calculate the time window for events that should trigger reminders NOW
+      // Events starting in X minutes (where X = advanceMinutes) should get reminders now
+      const eventStartTimeMin = new Date(now.getTime() + (advanceMinutes - 1) * 60000); // 1 minute before target
+      const eventStartTimeMax = new Date(now.getTime() + (advanceMinutes + 1) * 60000); // 1 minute after target
 
-      console.log(`Checking events starting between ${windowStart.toISOString()} and ${windowEnd.toISOString()} for ${users.length} users`);
+      console.log(`Checking for events starting between ${eventStartTimeMin.toISOString()} and ${eventStartTimeMax.toISOString()} (in ~${advanceMinutes} minutes) for ${users.length} users`);
 
       // Get family IDs for this group
       const familyIds = [...new Set(users.map(u => u.family_id))];
 
       // Get events in the reminder window for these families
-      const { data: upcomingEvents } = await supabase
+      const { data: upcomingEvents, error: eventsError } = await supabase
         .from("calendar_events")
         .select("*")
         .in("family_id", familyIds)
-        .gte("start_time", windowStart.toISOString())
-        .lte("start_time", windowEnd.toISOString());
+        .gte("start_time", eventStartTimeMin.toISOString())
+        .lte("start_time", eventStartTimeMax.toISOString());
+
+      if (eventsError) {
+        console.error(`Error fetching events for advance time ${advanceMinutes}:`, eventsError);
+        continue;
+      }
 
       if (!upcomingEvents?.length) {
         console.log(`No events found in reminder window for advance time ${advanceMinutes} minutes`);
@@ -88,36 +94,53 @@ const handler = async (req: Request): Promise<Response> => {
           targetUsers = familyUsers.filter(u => event.assignees.includes(u.user_id));
         }
 
+        console.log(`Processing event "${event.title}" (${event.id}) for ${targetUsers.length} users`);
+
         for (const user of targetUsers) {
           // Check if we already sent a reminder for this event to this user
-          const { data: existingReminder } = await supabase
+          const { data: existingReminder, error: checkError } = await supabase
             .from("notifications")
             .select("id")
             .eq("user_id", user.user_id)
             .eq("type", "event_reminder")
             .contains("data", { eventId: event.id });
 
+          if (checkError) {
+            console.error(`Error checking existing reminders for user ${user.user_id}:`, checkError);
+            continue;
+          }
+
           if (existingReminder?.length > 0) {
             console.log(`Reminder already sent for event ${event.id} to user ${user.user_id}`);
             continue;
           }
 
+          // Calculate more precise time until event
+          const eventStart = new Date(event.start_time);
+          const minutesUntilEvent = Math.round((eventStart.getTime() - now.getTime()) / 60000);
+          
           // Create the reminder notification
-          await supabase.rpc("create_notification", {
+          const { error: notificationError } = await supabase.rpc("create_notification", {
             p_family_id: event.family_id,
             p_user_id: user.user_id,
             p_type: "event_reminder",
             p_title: "Upcoming Event",
-            p_message: `"${event.title}" starts in ${advanceMinutes} minutes`,
+            p_message: `"${event.title}" starts in ${minutesUntilEvent} minutes`,
             p_data: { 
               eventId: event.id, 
               startTime: event.start_time,
-              advanceMinutes: advanceMinutes
+              advanceMinutes: advanceMinutes,
+              actualMinutesUntilEvent: minutesUntilEvent
             }
           });
 
+          if (notificationError) {
+            console.error(`Error creating notification for user ${user.user_id}:`, notificationError);
+            continue;
+          }
+
           remindersSent++;
-          console.log(`Event reminder sent to user ${user.user_id} for event "${event.title}"`);
+          console.log(`Event reminder sent to user ${user.user_id} for event "${event.title}" (${minutesUntilEvent} minutes until start)`);
         }
       }
     }
