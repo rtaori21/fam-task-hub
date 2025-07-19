@@ -96,23 +96,10 @@ export function Settings({}: SettingsProps) {
     fileInputRef.current?.click();
   };
 
-  // Notification Settings
-  const [notifications, setNotifications] = useState({
-    dailySummary: true,
-    taskAssigned: true,
-    taskDueSoon: true,
-    taskOverdue: true,
-    calendarReminders: true,
-    summaryTime: '08:00',
-    reminderMinutes: 15
-  })
-
   // App Preferences
   const [preferences, setPreferences] = useState({
     theme: (theme as 'light' | 'dark' | 'system') || 'system',
-    timeFormat: '12h' as '12h' | '24h',
-    weekStart: 'monday' as 'sunday' | 'monday',
-    defaultView: 'dashboard' as 'dashboard' | 'kanban' | 'calendar',
+    timeFormat: (localStorage.getItem('timeFormat') as '12h' | '24h') || '12h',
     autoSave: true,
     compactMode: false
   })
@@ -140,6 +127,9 @@ export function Settings({}: SettingsProps) {
 
         if (error) throw error
 
+        // Save time format preference to localStorage
+        localStorage.setItem('timeFormat', preferences.timeFormat);
+
         toast({
           title: "Settings Saved",
           description: "Your preferences have been updated successfully.",
@@ -155,14 +145,8 @@ export function Settings({}: SettingsProps) {
     }
   }
 
-
   const updateUserProfile = (updates: Partial<typeof userProfile>) => {
     setUserProfile(prev => ({ ...prev, ...updates }))
-    setIsDirty(true)
-  }
-
-  const updateNotifications = (updates: Partial<typeof notifications>) => {
-    setNotifications(prev => ({ ...prev, ...updates }))
     setIsDirty(true)
   }
 
@@ -493,33 +477,6 @@ export function Settings({}: SettingsProps) {
                     <SelectContent>
                       <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
                       <SelectItem value="24h">24-hour (14:30)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Week Starts On</Label>
-                  <Select value={preferences.weekStart} onValueChange={(value: 'sunday' | 'monday') => updatePreferences({ weekStart: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sunday">Sunday</SelectItem>
-                      <SelectItem value="monday">Monday</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Default View</Label>
-                  <Select value={preferences.defaultView} onValueChange={(value: 'dashboard' | 'kanban' | 'calendar') => updatePreferences({ defaultView: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dashboard">Dashboard</SelectItem>
-                      <SelectItem value="kanban">Kanban Board</SelectItem>
-                      <SelectItem value="calendar">Calendar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

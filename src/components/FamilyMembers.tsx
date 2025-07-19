@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Plus, User, Mail, MoreHorizontal, UserPlus, Settings } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,8 +31,6 @@ interface FamilyMember {
   role: 'admin' | 'member'
   avatar?: string
   joinedAt: string
-  tasksAssigned: number
-  tasksCompleted: number
 }
 
 const initialMembers: FamilyMember[] = []
@@ -56,9 +55,7 @@ export function FamilyMembers() {
         name: member.name,
         email: member.email || 'N/A',
         role: member.role === 'family_admin' ? 'admin' : 'member',
-        joinedAt: new Date(member.joinedAt).toISOString().split('T')[0],
-        tasksAssigned: 0, // TODO: Calculate from actual tasks
-        tasksCompleted: 0 // TODO: Calculate from actual tasks
+        joinedAt: new Date(member.joinedAt).toISOString().split('T')[0]
       }));
       setMembers(displayMembers);
     }
@@ -83,9 +80,7 @@ export function FamilyMembers() {
       name: inviteName.trim(),
       email: inviteEmail.trim(),
       role: 'member',
-      joinedAt: new Date().toISOString().split('T')[0],
-      tasksAssigned: 0,
-      tasksCompleted: 0,
+      joinedAt: new Date().toISOString().split('T')[0]
     }
 
     setMembers(prev => [...prev, newMember])
@@ -113,11 +108,6 @@ export function FamilyMembers() {
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase()
-  }
-
-  const getCompletionRate = (member: FamilyMember) => {
-    if (member.tasksAssigned === 0) return 0
-    return Math.round((member.tasksCompleted / member.tasksAssigned) * 100)
   }
 
   return (
@@ -214,21 +204,6 @@ export function FamilyMembers() {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tasks Progress</span>
-                  <span className="text-foreground">
-                    {member.tasksCompleted}/{member.tasksAssigned} ({getCompletionRate(member)}%)
-                  </span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2">
-                  <div 
-                    className="bg-status-done h-2 rounded-full transition-smooth"
-                    style={{ width: `${getCompletionRate(member)}%` }}
-                  />
-                </div>
               </div>
 
               <div className="mt-3 text-xs text-muted-foreground">

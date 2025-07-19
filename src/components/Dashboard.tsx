@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Plus, BarChart3, Clock, CheckCircle2, Users } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +19,7 @@ export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
     // Ensure family setup when dashboard loads
     ensureFamilySetup();
   }, [ensureFamilySetup]);
+
   const todayTasks = tasks.filter(task => {
     if (!task.dueDate) return false
     const today = new Date().toDateString()
@@ -26,7 +28,11 @@ export function Dashboard({ tasks = [], onCreateTask }: DashboardProps) {
 
   const overdueTasks = tasks.filter(task => {
     if (!task.dueDate) return false
-    return new Date(task.dueDate) < new Date() && task.status !== 'done'
+    // Set the task due date to end of day (23:59:59) for proper comparison
+    const taskDueDate = new Date(task.dueDate);
+    taskDueDate.setHours(23, 59, 59, 999);
+    const now = new Date();
+    return taskDueDate < now && task.status !== 'done'
   })
 
   const completedThisMonth = tasks.filter(task => {

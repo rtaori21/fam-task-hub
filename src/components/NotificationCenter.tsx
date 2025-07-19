@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Bell, Check, X, Settings, Clock, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { formatDateTime } from '@/utils/timeFormat';
 
 export const NotificationCenter = () => {
   const [showSettings, setShowSettings] = useState(false);
@@ -87,7 +89,7 @@ export const NotificationCenter = () => {
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    return formatDateTime(dateString);
   };
 
   return (
